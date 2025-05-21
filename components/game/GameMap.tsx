@@ -3,8 +3,8 @@ import React, { useEffect, useRef } from 'react';
 
 declare global {
   interface Window {
-    initMap: () => void;
-    google: any; // Consider using @types/google.maps for better type safety if project grows
+    initMap?: () => void; // Made initMap optional
+    google?: any; // Made google optional. Consider using @types/google.maps for better type safety
   }
 }
 
@@ -82,11 +82,11 @@ const GameMap: React.FC<GameMapProps> = ({ onMapLoaded, apiKey }) => {
       return () => {
         isMounted.current = false;
         document.head.removeChild(script);
-        delete window.initMap;
+        delete window.initMap; // Corrected delete usage
       };
     } else if (window.google && window.google.maps) {
       // If script is already there, just call initMap (e.g., on HMR)
-      window.initMap();
+      window.initMap?.(); // Safely call initMap using optional chaining
     }
 
     return () => {
@@ -94,7 +94,7 @@ const GameMap: React.FC<GameMapProps> = ({ onMapLoaded, apiKey }) => {
       // Note: Google Maps might not fully clean up itself. 
       // For complex scenarios, manual destruction of mapInstance might be needed.
       if (mapRef.current) mapRef.current.innerHTML = ''; // Clear map div
-      delete window.initMap;
+      delete window.initMap; // Corrected delete usage
     };
   }, [apiKey, onMapLoaded]);
 

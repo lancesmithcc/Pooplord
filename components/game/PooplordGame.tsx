@@ -30,7 +30,8 @@ const PooplordGame = () => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!mapLoaded) return; // Don't allow movement before map is ready
-      let dx = 0; dy = 0;
+      let dx = 0; 
+      let dy = 0;
       switch (event.key) {
         case 'ArrowUp': dy = -1; break;
         case 'ArrowDown': dy = 1; break;

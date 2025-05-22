@@ -266,6 +266,7 @@ window.initMap = function() {
                 
                 // Initialize items on the map
                 initializeItems();
+                adaptUIForDevice(); // Adapt UI after items and map are ready
             },
             // Error callback
             (error) => {
@@ -366,6 +367,7 @@ window.initMap = function() {
                 gameContainer.appendChild(character);
                 initializeCharacterPosition();
                 initializeItems();
+                adaptUIForDevice(); // Adapt UI for fallback scenario too
             },
             // Options
             {
@@ -690,6 +692,25 @@ function initializeItems() {
 }
 
 // Leaderboard functionality removed
+
+// Utility function to check for mobile devices
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || navigator.maxTouchPoints > 0;
+}
+
+function adaptUIForDevice() {
+    if (isMobileDevice()) {
+        const instructionsContent = document.getElementById('instructions-content');
+        if (instructionsContent) {
+            const paragraphs = instructionsContent.getElementsByTagName('p');
+            for (let p of paragraphs) {
+                if (p.textContent.includes('Arrow keys') || p.textContent.includes('WASD') || p.textContent.includes('Desktop')) {
+                    p.style.display = 'none';
+                }
+            }
+        }
+    }
+}
 
 // Call initMap or a similar function if Google Maps API is not yet integrated
 // ... existing code ... 

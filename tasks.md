@@ -101,7 +101,14 @@
 - [x] Client-side: Implement a timer (approx. 1 min) to trigger reflection requests.
 - [x] Client-side: Fetch reflection from server and speak using Web Speech API.
 - [ ] Ensure Web Speech API works reasonably across desktop, iOS, and Android for timed events. (Requires testing)
-  - [ ] Attempt to prime/unlock Web Speech API on iOS via initial user interaction with SFX toggle.
+  - [x] Attempt to prime/unlock Web Speech API on iOS via initial user interaction with SFX toggle.
+
+**Mobile Speech Fallback (Thought Bubble):**
+    - [x] Add HTML for a hidden thought bubble notification.
+    - [x] Style the thought bubble.
+    - [x] On mobile, show thought bubble with a "Hear Thoughts?" button instead of auto-playing speech.
+    - [x] Clicking the button plays the reflection and hides the bubble.
+    - [x] Ensure `recentlyEatenItems` is cleared appropriately for both desktop (auto-speak) and mobile (button-triggered speak).
 
 **Mushroom Item & Cosmic Reflections:**
 - [x] Define mushroom item (🍄) with high point value (e.g., 100x standard).
@@ -113,4 +120,10 @@
 *   Power-ups with temporary special abilities.
 *   Different map themes/styles.
 *   Achievements or challenges.
-*   Multiplayer mode (very complex). 
+*   Multiplayer mode (very complex).
+- [ ] **Mobile Speech Fallback (Thought Bubble):**
+    - [ ] Add HTML for a hidden thought bubble notification.
+    - [ ] Style the thought bubble.
+    - [ ] On mobile, show thought bubble with a "Hear Thoughts?" button instead of auto-playing speech.
+    - [ ] Clicking the button plays the reflection and hides the bubble.
+    - [ ] Ensure `recentlyEatenItems` is cleared appropriately for both desktop (auto-speak) and mobile (button-triggered speak). 

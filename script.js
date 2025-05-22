@@ -28,6 +28,11 @@ const AI_POOPLORD_TARGET_RADIUS = 5; // Radius within which AI considers target 
 // Variables for DeepSeek Reflections
 let recentlyEatenItems = [];
 const REFLECTION_INTERVAL = 60000; // 60 seconds
+let currentReflectionText = ""; // Store fetched reflection for mobile button
+
+// DOM elements for thought bubble
+const thoughtBubbleContainer = document.getElementById('thought-bubble-container');
+const speakThoughtsBtn = document.getElementById('speak-thoughts-btn');
 
 const itemSpawnInterval = 2000; // Spawn new item every 2 seconds
 const itemMovementInterval = 50; // Update item positions every 50ms for smoother animation
@@ -833,6 +838,12 @@ async function requestPooplordReflection() {
         return;
     }
 
+    // If thought bubble is already showing for a previous reflection, don't fetch a new one yet.
+    if (isMobileDevice() && thoughtBubbleContainer && !thoughtBubbleContainer.classList.contains('hidden')) {
+        console.log("Pooplord is still waiting for user to listen to previous thoughts on mobile.");
+        return;
+    }
+
     console.log("Requesting Pooplord reflection for items:", recentlyEatenItems);
 
     try {
@@ -847,21 +858,37 @@ async function requestPooplordReflection() {
         if (!response.ok) {
             const errorData = await response.json();
             console.error("Error fetching reflection:", response.status, errorData.error, errorData.details);
-            // Potentially speak an error message or handle differently
-            // speakText("My bowels are blocked... I can't reflect right now."); 
             return;
         }
 
         const data = await response.json();
         if (data.reflection) {
             console.log("Pooplord reflects:", data.reflection);
-            speakText(data.reflection);
-            recentlyEatenItems = []; // Clear the list after successful reflection
+            currentReflectionText = data.reflection; // Store for button
+
+            if (isMobileDevice() && thoughtBubbleContainer) {
+                thoughtBubbleContainer.classList.remove('hidden');
+                // `recentlyEatenItems` will be cleared when the button is clicked on mobile.
+            } else {
+                speakText(currentReflectionText);
+                recentlyEatenItems = []; // Clear for desktop after speaking
+            }
         } else {
             console.error("No reflection content in response:", data);
         }
     } catch (error) {
         console.error("Failed to request Pooplord reflection:", error);
-        // speakText("My digestive tract is in turmoil! No thoughts now...");
     }
+}
+
+// Event listener for the speak thoughts button in the thought bubble
+if (speakThoughtsBtn && thoughtBubbleContainer) {
+    speakThoughtsBtn.addEventListener('click', () => {
+        if (currentReflectionText) {
+            speakText(currentReflectionText);
+            recentlyEatenItems = []; // Clear items after user initiates speech on mobile
+        }
+        thoughtBubbleContainer.classList.add('hidden');
+        currentReflectionText = ""; // Clear stored text
+    });
 } 

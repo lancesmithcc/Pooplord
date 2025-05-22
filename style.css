@@ -280,4 +280,63 @@ html, body {
     mix-blend-mode: multiply;
     pointer-events: none; /* Allows interaction with the map underneath */
     z-index: 1; /* Make sure it's above the map but below other UI elements if any */
+}
+
+/* Thought Bubble for Mobile Speech */
+#thought-bubble-container {
+    position: fixed;
+    bottom: 80px; /* Adjust as needed, above sound controls */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #fff;
+    border: 2px solid #333;
+    border-radius: 20px; /* Main bubble shape */
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    z-index: 1000; /* Above everything */
+    text-align: center;
+    font-family: 'Comic Neue', cursive;
+    color: #333;
+    width: 80%;
+    max-width: 300px;
+}
+
+#thought-bubble-container.hidden {
+    display: none;
+}
+
+.thought-bubble-content p {
+    margin: 0 0 10px 0;
+    font-size: 0.9rem;
+}
+
+#speak-thoughts-btn {
+    background-color: #FFD700; /* Gold to match logo */
+    color: #333;
+    border: 1px solid #333;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Comic Neue', cursive;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+#speak-thoughts-btn:hover {
+    background-color: #f0c000;
+}
+
+/* Thought bubble tail */
+#thought-bubble-container::after {
+    content: '';
+    position: absolute;
+    bottom: -10px; /* Position the tail starting from below the bubble */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 15px solid #fff; /* White tail, same as bubble bg */
+    /* For border to show on tail, might need more complex SVG or multiple pseudo-elements */
 } 

@@ -88,22 +88,23 @@ export const useGameLogic = () => {
   }, []);
 
   const setMapContext = useCallback((map: GoogleMap, container: HTMLDivElement) => {
-    const projection = map.getProjection();
+    const projectionFromMap = map.getProjection();
     const center = map.getCenter();
     setGameState((prev: GameState) => ({
       ...prev,
       map,
       gameContainer: container,
-      projection,
+      projection: projectionFromMap === null ? undefined : projectionFromMap,
       character: center ? { ...prev.character, lat: center.lat, lng: center.lng } : prev.character,
     }));
     // Listen for map bounds changing to update projection if necessary
     map.getBounds();
     const listener = map.addListener('bounds_changed', () => {
-        const newProjection = map.getProjection();
-        if (newProjection) {
-            setGameState((prevUpdate: GameState) => ({...prevUpdate, projection: newProjection}));
-        }
+        const newProjectionFromMap = map.getProjection();
+        setGameState((prevUpdate: GameState) => ({
+          ...prevUpdate, 
+          projection: newProjectionFromMap === null ? undefined : newProjectionFromMap 
+        }));
     });
     // TODO: Store and clean up this listener properly
   }, [setGameState]);

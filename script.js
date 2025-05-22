@@ -212,7 +212,7 @@ window.initMap = function() {
                     center: userLocation,
                     zoom: 18, // Zoom in a bit more for satellite view
                     disableDefaultUI: true, // Remove default UI controls
-                    mapTypeId: 'satellite' // Set map type to satellite
+                    mapTypeId: 'hybrid' // Set map type to hybrid (satellite with labels)
                     // styles: [ ... ] // Remove or comment out custom styles
                 });
                 
@@ -246,7 +246,7 @@ window.initMap = function() {
                     center: defaultLocation,
                     zoom: 18, // Zoom in a bit more for satellite view
                     disableDefaultUI: true,
-                    mapTypeId: 'satellite' // Set map type to satellite for fallback too
+                    mapTypeId: 'hybrid' // Set map type to hybrid for fallback too
                     // styles: [ ... ] // Remove or comment out custom styles
                 });
                 
@@ -647,7 +647,7 @@ function speakText(textToSpeak) {
 if (musicToggleButton) {
     musicToggleButton.addEventListener('click', () => {
         isMusicOn = !isMusicOn;
-        musicToggleButton.textContent = isMusicOn ? '🎵 Music: On' : '🎵 Music: Off';
+        musicToggleButton.textContent = isMusicOn ? '🎵' : '🔇'; // Update icon
         if (backgroundMusic) {
             if (isMusicOn) {
                 if (hasUserInteracted && backgroundMusic.paused) { // Only play if user has interacted and it's paused
@@ -659,7 +659,7 @@ if (musicToggleButton) {
         }
         // Ensure user interaction flag is set if music is turned on via button
         if (isMusicOn && !hasUserInteracted) {
-            hasUserInteracted = true; 
+            hasUserInteracted = true;
             // Attempt to play if paused, as this is now a valid user interaction
             if (backgroundMusic && backgroundMusic.paused) {
                  backgroundMusic.play().catch(error => console.error("Error playing background music (initial toggle):", error));
@@ -671,7 +671,7 @@ if (musicToggleButton) {
 if (sfxToggleButton) {
     sfxToggleButton.addEventListener('click', () => {
         areSfxOn = !areSfxOn;
-        sfxToggleButton.textContent = areSfxOn ? '🔊 SFX: On' : '🔊 SFX: Off';
+        sfxToggleButton.textContent = areSfxOn ? '🔊' : '🔇'; // Update icon
         // If SFX are turned off, cancel any ongoing speech
         if (!areSfxOn && 'speechSynthesis' in window) {
             window.speechSynthesis.cancel();

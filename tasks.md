@@ -77,10 +77,12 @@
 - [x] Ensure map and movement are working correctly.
 - [x] Make item emojis appear correctly (no default pin, larger size).
 - [ ] Implement item movement along roads using Google Maps Directions Service.
-- [ ] Add button to toggle background music.
-- [ ] Add button to toggle game sounds (fart sounds, speech synthesis).
-- [ ] Ensure audio works on mobile after user interaction with new buttons.
-- [ ] Change map to satellite view.
+- [x] Add button to toggle background music.
+- [x] Add button to toggle game sounds (fart sounds, speech synthesis).
+- [x] Ensure audio works on mobile after user interaction with new buttons.
+- [x] Change map to satellite view.
+- [x] Change map to hybrid view (satellite with labels).
+- [x] Update sound toggle buttons to use icons and ensure functionality.
 
 ### Later / Optional
 *   Consider leaderboard alternatives if desired.

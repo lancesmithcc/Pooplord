@@ -706,7 +706,7 @@ function spawnAIPooplord() {
 
     findTargetForAIPooplord(newAIPooplord);
     aiPooplords.push(newAIPooplord);
-    console.log("New AI pooplord created:", newAIPooplord);
+    // console.log("New AI pooplord created:", newAIPooplord);
 }
 
 function findTargetForAIPooplord(aiLord) {
@@ -727,9 +727,9 @@ function findTargetForAIPooplord(aiLord) {
     }
     aiLord.target = closestPerson;
     if (closestPerson) {
-        console.log(`AI Pooplord ${aiLord.id} targeting ${closestPerson.type.name} at ${closestPerson.latLng.toString()}`);
+        // console.log(`AI Pooplord ${aiLord.id} targeting ${closestPerson.type.name} at ${closestPerson.latLng.toString()}`);
     } else {
-        console.log(`AI Pooplord ${aiLord.id} found no person targets.`);
+        // console.log(`AI Pooplord ${aiLord.id} found no person targets.`);
         aiLord.state = 'idle'; // Or some other state if no targets
     }
 }
@@ -742,7 +742,7 @@ function updateAIPooplords() {
 
         if (!aiLord.marker || !aiLord.marker.getMap()) { // Check if marker exists and is on map
             aiPooplords.splice(i, 1); // Remove if marker is gone (e.g. due to external cleanup)
-            console.log(`Cleaned up AI Pooplord ${aiLord.id} as its marker is gone.`);
+            // console.log(`Cleaned up AI Pooplord ${aiLord.id} as its marker is gone.`);
             continue;
         }
 
@@ -758,7 +758,7 @@ function updateAIPooplords() {
 
             if (distanceToTarget < AI_POOPLORD_TARGET_RADIUS) {
                 // Reached target - "explode" person
-                console.log(`AI Pooplord ${aiLord.id} reached target ${aiLord.target.type.name}`);
+                // console.log(`AI Pooplord ${aiLord.id} reached target ${aiLord.target.type.name}`);
                 
                 // Find the item in allItemsOnMap to remove it properly
                 const targetIndex = allItemsOnMap.findIndex(item => item.id === aiLord.target.id);
@@ -769,10 +769,10 @@ function updateAIPooplords() {
 
                     aiLord.target.marker.setMap(null); // Remove person marker
                     allItemsOnMap.splice(targetIndex, 1);
-                    console.log(`AI Pooplord ${aiLord.id} exploded ${aiLord.target.type.name}. Remaining items: ${allItemsOnMap.length}`);
+                    // console.log(`AI Pooplord ${aiLord.id} exploded ${aiLord.target.type.name}. Remaining items: ${allItemsOnMap.length}`);
 
                     // Spawn a new random item to replace the one consumed by AI
-                     setTimeout(() => {
+                    setTimeout(() => {
                         createItem();
                     }, Math.random() * 1000 + 500);
 
@@ -791,7 +791,7 @@ function updateAIPooplords() {
             }
         } else if (aiLord.target && (!aiLord.target.marker || !aiLord.target.marker.getMap())) {
             // Target was removed by player or another AI, find new target
-            console.log(`AI Pooplord ${aiLord.id}'s target was removed. Finding new target.`);
+            // console.log(`AI Pooplord ${aiLord.id}\'s target was removed. Finding new target.`);
             aiLord.target = null;
             aiLord.state = 'seeking';
             findTargetForAIPooplord(aiLord);

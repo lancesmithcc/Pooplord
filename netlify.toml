@@ -5,6 +5,9 @@
   command = "npm run build"
   functions = "netlify/functions"
 
+[functions."get-pooplord-reflection"]
+  timeout = 25 # Increase timeout to 25 seconds (Netlify may cap this based on your plan)
+
 # Redirect API traffic to functions (MUST COME BEFORE SPA REDIRECT)
 [[redirects]]
   from = "/api/*"

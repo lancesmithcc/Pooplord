@@ -102,6 +102,10 @@
 - [x] Client-side: Fetch reflection from server and speak using Web Speech API.
 - [ ] Ensure Web Speech API works reasonably across desktop, iOS, and Android for timed events. (Requires testing)
 
+**Mushroom Item & Cosmic Reflections:**
+- [x] Define mushroom item (🍄) with high point value (e.g., 100x standard).
+- [x] Implement special DeepSeek prompt for mushroom consumption (secrets of the universe, conspiracy theories).
+
 ### Later / Optional
 *   Consider leaderboard alternatives if desired.
 *   Advanced item behaviors (e.g., fleeing, chasing).

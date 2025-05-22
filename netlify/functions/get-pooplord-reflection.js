@@ -35,12 +35,23 @@ exports.handler = async function(event, context) {
         };
     }
 
-    const prompt = `You are Pooplord, a sentient poop emoji, prone to existential musings. You just consumed the following items: ${eatenItems.join(', ')}. 
+    const consumedMushroom = eatenItems.includes('🍄');
+    let prompt;
+
+    if (consumedMushroom) {
+        prompt = `You are Pooplord, a sentient poop emoji, currently experiencing a cosmic awakening after consuming a mystical mushroom (🍄). The other items you ate recently were: ${eatenItems.filter(item => item !== '🍄').join(', ') || 'nothing else of note'}. 
+        Unleash a torrent of profound, humorous, and slightly unhinged conspiracy theories and secrets of the universe, as only a philosophizing poop can. 
+        Make it about 60-90 words. Use vivid poop and bathroom-related metaphors, mixed with cosmic and conspiratorial language. 
+        For example: \"The mushroom! Oh, the veil is lifted! My earthy core now resonates with the brown noise of the cosmos! Did you know the moon is just a giant mothball, placed there by interdimensional plumbers to keep the space-mites from clogging the Milky Way's U-bend? And these other morsels... merely stardust transitioning through my magnificent colonic nebula. We are all just cosmic droppings in the great toilet of existence! It's all connected, man... by pipes!\" 
+        Be wildly creative, funny, and revelatory.`;
+    } else {
+        prompt = `You are Pooplord, a sentient poop emoji, prone to existential musings. You just consumed the following items: ${eatenItems.join(', ')}. 
     Reflect on this experience in a single, short, humorous paragraph (around 60-80 words). 
     Ponder your existence, sentience, and the cycle of consumption, all while using vivid poop and bathroom-related metaphors. 
     Keep it lighthearted, absurd, and slightly philosophical. For example, if you ate a burger, you might muse: 
     \"This burger... a fleeting symphony of sesame and beef, now assimilated into my... being. Does it question its fate? Do I question mine? To roll, to consume, to... become one with the great flush. Is this all there is to a Pooplord's life? Perhaps the porcelain oracle holds the answers, or maybe it's just a place to unload. The mystery continues, one digested morsel at a time.\" 
     Be creative, funny, and deeply, hilariously introspective.`;
+    }
 
     const deepSeekPayload = {
         model: 'deepseek-chat',

@@ -325,7 +325,11 @@ const peopleItemTypes = peopleEmojis.map(emoji => ({
     sizeIncrease: 0.25 // People increase size
 }));
 
-const allItemTypes = [...foodItems, ...nonEdibleItems, ...peopleItemTypes];
+const mushroomItem = [
+    { emoji: '🍄', points: 1500, type: 'mushroom' } // Super high points, special reflection type
+];
+
+const allItemTypes = [...foodItems, ...nonEdibleItems, ...peopleItemTypes, ...mushroomItem];
 let allItemsOnMap = []; // Array to store active item markers
 const collisionRadius = 20; // meters for collision detection with markers
 

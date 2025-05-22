@@ -24,6 +24,10 @@ const ITEM_WANDER_SPEED = 0.75; // Meters per movement interval (e.g., 0.75m eve
 const ITEM_STEPS_BEFORE_TURN = 80; // Approx. 4 seconds (80 * 50ms)
 const PERSON_FRAME_CHANGE_INTERVAL = 250; // Milliseconds (4 frames per second)
 
+// Audio elements and sound paths
+let backgroundMusic;
+const fartSounds = ['fart1.mp3', 'fart2.mp3', 'fart3.mp3'];
+
 // Get score display element from the DOM
 const scoreDisplay = document.getElementById('score-display');
 // const gameInfo = document.getElementById('game-info'); // game-info is no longer used in JS
@@ -98,6 +102,7 @@ function checkCollision() {
 // Handle collision with an item
 function handleItemCollision(item, index) {
     createBrownExplosion(item.marker.getPosition()); // Create brown explosion at item's location
+    playRandomFartSound(); // Play a fart sound on any collision
 
     updateScore(item.type.points);
 
@@ -145,6 +150,14 @@ function startCollisionDetection() {
 // Make sure initMap is globally available for the Google Maps API callback
 window.initMap = function() {
     console.log("Google Maps API loaded. Initializing map...");
+    
+    // Initialize and play background music
+    if (!backgroundMusic) {
+        backgroundMusic = new Audio('pooplord.mp3');
+        backgroundMusic.loop = true;
+        backgroundMusic.volume = 0.3; // Adjust volume as needed (0.0 to 1.0)
+        backgroundMusic.play().catch(error => console.error("Error playing background music:", error));
+    }
     
     directionsService = new google.maps.DirectionsService();
     directionsRenderer = new google.maps.DirectionsRenderer({
@@ -267,6 +280,11 @@ window.initMap = function() {
                 // Initialize items on the map
                 initializeItems();
                 adaptUIForDevice(); // Adapt UI after items and map are ready
+                
+                // Ensure music starts in fallback too if not already playing
+                if (backgroundMusic && backgroundMusic.paused) {
+                    backgroundMusic.play().catch(error => console.error("Error playing background music (fallback):", error));
+                }
             },
             // Error callback
             (error) => {
@@ -368,6 +386,11 @@ window.initMap = function() {
                 initializeCharacterPosition();
                 initializeItems();
                 adaptUIForDevice(); // Adapt UI for fallback scenario too
+                
+                // Ensure music starts in fallback too if not already playing
+                if (backgroundMusic && backgroundMusic.paused) {
+                     backgroundMusic.play().catch(error => console.error("Error playing background music (fallback error path):", error));
+                }
             },
             // Options
             {
@@ -709,6 +732,17 @@ function adaptUIForDevice() {
                 }
             }
         }
+    }
+}
+
+// Function to play a random fart sound
+function playRandomFartSound() {
+    if (fartSounds.length > 0) {
+        const randomIndex = Math.floor(Math.random() * fartSounds.length);
+        const soundToPlay = fartSounds[randomIndex];
+        const soundEffect = new Audio(soundToPlay);
+        soundEffect.volume = 0.7; // Adjust volume for sound effects if needed
+        soundEffect.play().catch(error => console.error(`Error playing sound ${soundToPlay}:`, error));
     }
 }
 

@@ -11,7 +11,7 @@ const character = document.getElementById('character');
 const gameContainer = document.getElementById('game-container');
 let characterX = character.offsetLeft;
 let characterY = character.offsetTop;
-const characterSpeed = 10; // Pixels per move
+const characterSpeed = 10; // Pixels per move - this will now be a map pan amount
 let map; // Google Map instance
 let score = 0; // Player's score
 let characterSize = 2; // Character size multiplier (starts at 2rem)
@@ -19,14 +19,14 @@ let characterStrength = 10; // Character's strength
 
 // Get score display element from the DOM
 const scoreDisplay = document.getElementById('score-display');
-const gameInfo = document.getElementById('game-info');
+// const gameInfo = document.getElementById('game-info'); // game-info is no longer used in JS
 
-// Add a button to hide/show instructions
+// Logic for old game-info panel (now instructions-panel, CSS handled)
+/*
 const hideInstructionsTimeout = setTimeout(() => {
     gameInfo.style.opacity = '0.3';
 }, 5000); // Hide instructions after 5 seconds
 
-// Show instructions when hovered
 gameInfo.addEventListener('mouseenter', () => {
     clearTimeout(hideInstructionsTimeout);
     gameInfo.style.opacity = '1';
@@ -35,6 +35,7 @@ gameInfo.addEventListener('mouseenter', () => {
 gameInfo.addEventListener('mouseleave', () => {
     gameInfo.style.opacity = '0.3';
 });
+*/
 
 // Update score display
 function updateScore(points) {
@@ -77,22 +78,16 @@ function updateCharacterSpeed(change) {
     // characterSpeed is defined above, adjust as needed
 }
 
-// Check for collision between character and an item
+// Check for collision between character (map center) and an item (marker)
 function checkCollision() {
-    const charRect = character.getBoundingClientRect();
-    
+    if (!map) return;
+    const characterLatLng = map.getCenter();
+
     for (let i = allItemsOnMap.length - 1; i >= 0; i--) {
         const item = allItemsOnMap[i];
-        const itemRect = item.element.getBoundingClientRect();
-        
-        // Simple rectangular collision detection
-        if (
-            charRect.left < itemRect.right &&
-            charRect.right > itemRect.left &&
-            charRect.top < itemRect.bottom &&
-            charRect.bottom > itemRect.top
-        ) {
-            // Collision detected!
+        const distance = google.maps.geometry.spherical.computeDistanceBetween(characterLatLng, item.latLng);
+
+        if (distance < collisionRadius) {
             handleItemCollision(item, i);
         }
     }
@@ -100,57 +95,27 @@ function checkCollision() {
 
 // Handle collision with an item
 function handleItemCollision(item, index) {
+    // Effects (score, size) are the same
     if (item.isFood) {
-        // Handle food item
         updateScore(item.type.points);
         updateCharacterSize(item.type.sizeIncrease);
-        
-        // Animation for eating
         character.classList.add('eating');
-        setTimeout(() => {
-            character.classList.remove('eating');
-        }, 300);
-        
-        // Play sound or show animation here if desired
+        setTimeout(() => character.classList.remove('eating'), 300);
     } else {
-        // Handle non-edible item
         updateScore(item.type.points);
         updateCharacterSize(-item.type.sizeDecrease);
-        
-        // Animation for getting hurt
         character.classList.add('hurt');
-        setTimeout(() => {
-            character.classList.remove('hurt');
-        }, 300);
-        
-        // Play sound or show animation here if desired
+        setTimeout(() => character.classList.remove('hurt'), 300);
     }
-    
-    // Animate item being consumed
-    item.element.style.transition = 'all 0.3s ease-out';
-    if (item.isFood) {
-        // Food gets eaten (scale down and move to character)
-        item.element.style.transform = 'scale(0)';
-        item.element.style.left = `${characterX}px`;
-        item.element.style.top = `${characterY}px`;
-    } else {
-        // Non-edible hurts (shake and fade)
-        item.element.style.transform = 'rotate(90deg) scale(0)';
-        item.element.style.opacity = '0';
-    }
-    
-    // Remove the item after animation completes
+
+    // Remove the marker from the map
+    item.marker.setMap(null);
+    allItemsOnMap.splice(index, 1);
+
+    // Spawn a new item (marker)
     setTimeout(() => {
-        if (gameContainer.contains(item.element)) {
-            gameContainer.removeChild(item.element);
-        }
-        allItemsOnMap.splice(index, 1);
-        
-        // Spawn a new item to replace the one that was removed
-        setTimeout(() => {
-            createItem(Math.random() < 0.7);
-        }, Math.random() * 1000 + 500); // Random delay between 500ms and 1500ms
-    }, 300);
+        createItem(Math.random() < 0.7);
+    }, Math.random() * 1000 + 500);
 }
 
 // Start collision detection
@@ -180,23 +145,85 @@ function initMap() {
                     zoom: 17, // Close enough to see buildings and streets
                     disableDefaultUI: true, // Remove default UI controls
                     styles: [
-                        // Custom map style to make it more game-like
-                        // Remove business markers, make colors more vibrant
+                        // Custom Dark Mode Map Style (Charcoal, Brown, Green)
+                        { elementType: "geometry", stylers: [{ color: "#242f3e" }] }, // Charcoal base
+                        { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                        { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] }, // Brownish labels
                         {
-                            featureType: "poi",
-                            elementType: "labels",
-                            stylers: [{ visibility: "off" }]
+                            featureType: "administrative.locality",
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#d59563" }], // Lighter brown for locality
+                        },
+                        {
+                            featureType: "poi", // Points of Interest
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#938170" }], // Muted brown for POI labels
+                        },
+                        {
+                            featureType: "poi.park", // Parks will be green
+                            elementType: "geometry",
+                            stylers: [{ color: "#263c3f" }], // Dark green for park geometry
+                        },
+                        {
+                            featureType: "poi.park",
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#6b9a76" }], // Lighter green for park labels
                         },
                         {
                             featureType: "road",
                             elementType: "geometry",
-                            stylers: [{ color: "#f5f5f5" }]
+                            stylers: [{ color: "#38414e" }], // Darker charcoal for roads
                         },
                         {
-                            featureType: "landscape",
+                            featureType: "road",
+                            elementType: "geometry.stroke",
+                            stylers: [{ color: "#212a37" }],
+                        },
+                        {
+                            featureType: "road",
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#9ca5b3" }], // Light grey for road labels
+                        },
+                        {
+                            featureType: "road.highway",
                             elementType: "geometry",
-                            stylers: [{ color: "#e8e8e8" }]
-                        }
+                            stylers: [{ color: "#746855" }], // Brown for highways
+                        },
+                        {
+                            featureType: "road.highway",
+                            elementType: "geometry.stroke",
+                            stylers: [{ color: "#1f2835" }],
+                        },
+                        {
+                            featureType: "road.highway",
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#f3d19c" }], // Light brownish/yellow for highway labels
+                        },
+                        {
+                            featureType: "transit",
+                            elementType: "geometry",
+                            stylers: [{ color: "#2f3948" }],
+                        },
+                        {
+                            featureType: "transit.station",
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#d59563" }],
+                        },
+                        {
+                            featureType: "water",
+                            elementType: "geometry",
+                            stylers: [{ color: "#17263c" }], // Dark blue/charcoal for water
+                        },
+                        {
+                            featureType: "water",
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#515c6d" }],
+                        },
+                        {
+                            featureType: "water",
+                            elementType: "labels.text.stroke",
+                            stylers: [{ color: "#17263c" }],
+                        },
                     ]
                 });
                 
@@ -219,7 +246,57 @@ function initMap() {
                 map = new google.maps.Map(gameContainer, {
                     center: defaultLocation,
                     zoom: 17,
-                    disableDefaultUI: true
+                    disableDefaultUI: true,
+                    styles: [ // Apply dark mode to fallback map too
+                        { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                        { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                        { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+                        {
+                            featureType: "administrative.locality",
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#d59563" }],
+                        },
+                        {
+                            featureType: "poi.park",
+                            elementType: "geometry",
+                            stylers: [{ color: "#263c3f" }],
+                        },
+                        {
+                            featureType: "poi.park",
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#6b9a76" }],
+                        },
+                        {
+                            featureType: "road",
+                            elementType: "geometry",
+                            stylers: [{ color: "#38414e" }],
+                        },
+                        {
+                            featureType: "road",
+                            elementType: "geometry.stroke",
+                            stylers: [{ color: "#212a37" }],
+                        },
+                        {
+                            featureType: "road",
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#9ca5b3" }],
+                        },
+                        {
+                            featureType: "road.highway",
+                            elementType: "geometry",
+                            stylers: [{ color: "#746855" }],
+                        },
+                        {
+                            featureType: "water",
+                            elementType: "geometry",
+                            stylers: [{ color: "#17263c" }],
+                        },
+                        {
+                            featureType: "water",
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#515c6d" }],
+                        }
+                    ]
                 });
                 
                 gameContainer.appendChild(character);
@@ -259,50 +336,46 @@ const nonEdibleItems = [
 const allItemsOnMap = []; // Track all items currently on the map
 const maxItems = 15; // Maximum number of items on the map at once
 const itemSpawnInterval = 2000; // New item every 2 seconds (if below maxItems)
-const itemMovementInterval = 50; // Update item positions every 50ms
+const itemMovementInterval = 50; // Update item positions every 50ms - will be used differently now
+const collisionCheckInterval = 100; // How often to check for collisions
+const itemSpawnRadius = 500; // Meters from map center to spawn items
+const collisionRadius = 20; // Meters from character (map center) to trigger collision
 
-// Create and add an item to the map
+// Create and add an item to the map as a Google Maps Marker
 function createItem(isFood = true) {
-    if (allItemsOnMap.length >= maxItems) return; // Don't create more items if at max
-    
-    // Choose a random item type
+    if (allItemsOnMap.length >= maxItems || !map) return;
+
     const itemsArray = isFood ? foodItems : nonEdibleItems;
     const itemType = itemsArray[Math.floor(Math.random() * itemsArray.length)];
-    
-    // Create a DOM element for the item
-    const itemElement = document.createElement('div');
-    itemElement.textContent = itemType.emoji;
-    itemElement.className = isFood ? 'food-item' : 'non-edible-item';
-    itemElement.classList.add('game-item');
-    
-    // Random position within the game container
-    const containerRect = gameContainer.getBoundingClientRect();
-    const itemSize = 30; // Base size in pixels
-    
-    const randomX = Math.random() * (containerRect.width - itemSize);
-    const randomY = Math.random() * (containerRect.height - itemSize);
-    
-    itemElement.style.left = `${randomX}px`;
-    itemElement.style.top = `${randomY}px`;
-    itemElement.style.position = 'absolute';
-    itemElement.style.fontSize = `${itemSize}px`;
-    itemElement.style.zIndex = '5'; // Below character but above map
-    
-    // Add to game container
-    gameContainer.appendChild(itemElement);
-    
-    // Store item data
+
+    // Calculate a random LatLng position near the map center
+    const mapCenter = map.getCenter();
+    const randomAngle = Math.random() * 360;
+    const randomDistance = Math.random() * itemSpawnRadius; // Spawn within X meters
+    const itemLatLng = google.maps.geometry.spherical.computeOffset(mapCenter, randomDistance, randomAngle);
+
+    const marker = new google.maps.Marker({
+        position: itemLatLng,
+        map: map,
+        // icon: itemType.emoji, // Not directly supported, need to use custom icon or label
+        label: {
+            text: itemType.emoji,
+            fontSize: '24px',
+            className: isFood ? 'food-item-label' : 'non-edible-item-label' // For potential styling
+        },
+        // title: itemType.name // Shows on hover
+        // We can make custom icons later if needed for better visuals
+        zIndex: 5 // Ensure items are interactable but don't obscure character too much
+    });
+
     const itemData = {
-        element: itemElement,
+        marker: marker, // Store the marker object
         type: itemType,
         isFood: isFood,
-        x: randomX,
-        y: randomY,
-        vx: (Math.random() - 0.5) * 2, // Random velocity X
-        vy: (Math.random() - 0.5) * 2, // Random velocity Y
-        size: itemSize
+        latLng: itemLatLng // Store LatLng for distance calculations
+        // x, y, vx, vy, size, element are no longer needed in the same way
     };
-    
+
     allItemsOnMap.push(itemData);
     return itemData;
 }
@@ -316,28 +389,10 @@ function startItemSpawning() {
     }, itemSpawnInterval);
 }
 
-// Move all items on the map
+// Move all items on the map - FOR NOW, ITEMS ARE STATIONARY MARKERS
 function moveItems() {
-    for (let i = 0; i < allItemsOnMap.length; i++) {
-        const item = allItemsOnMap[i];
-        
-        // Update position based on velocity
-        item.x += item.vx;
-        item.y += item.vy;
-        
-        // Bounce off walls
-        const containerRect = gameContainer.getBoundingClientRect();
-        if (item.x <= 0 || item.x + item.size >= containerRect.width) {
-            item.vx *= -1; // Reverse horizontal direction
-        }
-        if (item.y <= 0 || item.y + item.size >= containerRect.height) {
-            item.vy *= -1; // Reverse vertical direction
-        }
-        
-        // Apply new position
-        item.element.style.left = `${item.x}px`;
-        item.element.style.top = `${item.y}px`;
-    }
+    // This function will need to be re-thought if items are to move as markers.
+    // For now, markers are stationary. Their LatLng is fixed unless we update it.
 }
 
 // Start item movement
@@ -354,43 +409,32 @@ function initializeCharacterPosition() {
 
 document.addEventListener('keydown', (event) => {
     const key = event.key.toLowerCase();
-    let newX = characterX;
-    let newY = characterY;
     let isMoving = false;
+    let panX = 0;
+    let panY = 0;
 
     if (key === 'arrowup' || key === 'w') {
-        newY -= characterSpeed;
+        panY = -characterSpeed;
         isMoving = true;
     } else if (key === 'arrowdown' || key === 's') {
-        newY += characterSpeed;
+        panY = characterSpeed;
         isMoving = true;
     } else if (key === 'arrowleft' || key === 'a') {
-        newX -= characterSpeed;
+        panX = -characterSpeed;
         isMoving = true;
     } else if (key === 'arrowright' || key === 'd') {
-        newX += characterSpeed;
+        panX = characterSpeed;
         isMoving = true;
+    }
+
+    if (map && (panX !== 0 || panY !== 0)) {
+        map.panBy(panX, panY);
     }
 
     // Only add animation if actually moving
     if (isMoving) {
         character.classList.add('moving');
     }
-
-    // Boundary checks for gameContainer
-    const charRect = character.getBoundingClientRect(); // Get current size
-    const containerRect = gameContainer.getBoundingClientRect();
-
-    // Adjust for character size to keep it fully within bounds
-    if (newX < 0) newX = 0;
-    if (newY < 0) newY = 0;
-    if (newX + charRect.width > containerRect.width) newX = containerRect.width - charRect.width;
-    if (newY + charRect.height > containerRect.height) newY = containerRect.height - charRect.height;
-
-    characterX = newX;
-    characterY = newY;
-    character.style.left = `${characterX}px`;
-    character.style.top = `${characterY}px`;
 });
 
 document.addEventListener('keyup', (event) => {
@@ -410,54 +454,36 @@ if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
 
 // Touch controls for mobile devices
 let isDragging = false;
-let touchOffsetX = 0;
-let touchOffsetY = 0;
+let touchStartX = 0;
+let touchStartY = 0;
 
 character.addEventListener('touchstart', (event) => {
     isDragging = true;
-    
-    // Calculate the offset between touch point and character position
     const touch = event.touches[0];
-    const charRect = character.getBoundingClientRect();
-    touchOffsetX = touch.clientX - charRect.left;
-    touchOffsetY = touch.clientY - charRect.top;
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
     
     // Change cursor style
     character.style.cursor = 'grabbing';
+    character.classList.add('moving'); // Add moving animation
     
     // Prevent default to avoid scrolling the page
     event.preventDefault();
 });
 
 document.addEventListener('touchmove', (event) => {
-    if (!isDragging) return;
+    if (!isDragging || !map) return;
     
     const touch = event.touches[0];
-    const containerRect = gameContainer.getBoundingClientRect();
-    const charRect = character.getBoundingClientRect();
-    
-    // Add moving animation while dragging
-    character.classList.add('moving');
-    
-    // Calculate new position relative to the container
-    let newX = touch.clientX - containerRect.left - touchOffsetX;
-    let newY = touch.clientY - containerRect.top - touchOffsetY;
-    
-    // Boundary checks
-    if (newX < 0) newX = 0;
-    if (newY < 0) newY = 0;
-    if (newX + charRect.width > containerRect.width) {
-        newX = containerRect.width - charRect.width;
-    }
-    if (newY + charRect.height > containerRect.height) {
-        newY = containerRect.height - charRect.height;
-    }
-    
-    // Update character position
-    characterX = newX;
-    characterY = newY;
-    character.style.left = `${characterX}px`;
-    character.style.top = `${characterY}px`;
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
+
+    // Pan the map in the opposite direction of the drag
+    map.panBy(-deltaX / 2, -deltaY / 2); // Divide by 2 for less sensitive panning
+
+    // Update start points for next move event
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
     
     // Prevent default to avoid scrolling the page
     event.preventDefault();

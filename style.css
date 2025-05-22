@@ -1,12 +1,10 @@
-body {
+html, body {
+    width: 100%;
+    height: 100%;
     margin: 0;
+    padding: 0;
     overflow: hidden; /* Prevent scrollbars from map */
     font-family: 'Comic Neue', cursive;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #f0f0f0;
 }
 
 /* Animation keyframes */
@@ -39,16 +37,11 @@ body {
 }
 
 #game-container {
-    width: 80vw; /* Adjust as needed */
-    height: 80vh; /* Adjust as needed */
-    max-width: 800px;
-    max-height: 600px;
-    border: 2px solid #333;
-    border-radius: 15px;
+    width: 100%;
+    height: 100%;
     position: relative; /* For positioning character and items */
     background-color: #ddd; /* Placeholder until map loads */
     overflow: hidden; /* Keep items within bounds */
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
 #character {
@@ -100,53 +93,41 @@ body {
     transform: scale(0.9) rotate(10deg);
 }
 
-/* Game info and instructions */
-#game-info {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: rgba(255, 255, 255, 0.8);
-    padding: 10px;
-    border-radius: 10px;
-    z-index: 20;
-    max-width: 300px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    border: 2px solid #333;
-    transition: opacity 0.3s ease;
+/* Game HUD (Logo and Score) */
+#game-hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px 20px;
+    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black background */
+    display: flex;
+    justify-content: space-between; /* Pushes logo to left, score to right */
+    align-items: center;
+    z-index: 30; /* Ensure HUD is above character and map elements */
+    box-sizing: border-box; /* Include padding in width calculation */
 }
 
-#game-info h1 {
-    margin: 0 0 10px 0;
-    color: #8B4513; /* Brown color for Pooplord */
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
-    font-size: 1.8rem;
+#hud-logo {
+    margin: 0;
+    color: #FFD700; /* Gold color for Pooplord logo */
+    text-shadow: 2px 2px 4px rgba(139, 69, 19, 0.8); /* Brownish shadow */
+    font-size: 2.5rem; /* Prominent logo size */
+    font-family: 'Comic Neue', cursive;
 }
 
-#instructions {
-    font-size: 0.9rem;
-    line-height: 1.2;
-}
-
-#instructions p {
-    margin: 5px 0;
-}
-
-/* Score display */
+/* Score display (now part of HUD) */
 #score-display {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 20;
-    background-color: rgba(0, 0, 0, 0.7);
+    /* position, top, left, z-index are now controlled by #game-hud flex layout */
+    /* background-color, border, box-shadow can be removed or adjusted if HUD bg is enough */
     color: white;
-    padding: 5px 15px;
-    border-radius: 20px;
+    padding: 0; /* Remove padding if HUD provides enough spacing */
+    border-radius: 0; /* Remove border-radius if HUD provides it */
     font-family: 'Comic Neue', cursive;
     font-weight: bold;
-    font-size: 1.2rem;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-    border: 2px solid #222;
+    font-size: 1.8rem; /* Larger score display */
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+    /* No explicit position needed, flexbox in #game-hud handles it */
 }
 
 .points-popup {
@@ -159,9 +140,9 @@ body {
 
 /* Leaderboard button */
 #leaderboard-button {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
     background-color: #FFD700;
     color: #333;
     border: 2px solid #333;
@@ -190,6 +171,7 @@ body {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
     justify-content: center;
     align-items: center;
 }
@@ -282,4 +264,67 @@ body {
     background-color: #a05c1b;
 }
 
-/* We'll add more styles for items, map, score, etc. later */ 
+/* Styles for Google Maps Marker Labels (Optional) */
+.food-item-label,
+.non-edible-item-label {
+    /* 
+    You can add custom styles here if you want to change the appearance 
+    of the emoji labels on the map markers. 
+    For example, text-shadow, color, etc. 
+    However, styling these through CSS can be tricky as they are rendered 
+    by the Maps API. For more complex icons, using `marker.setIcon()` 
+    with custom image URLs is often preferred.
+    */
+    font-weight: bold; /* Make emoji slightly bolder if font supports it */
+}
+
+/* We'll add more styles for items, map, score, etc. later */
+
+/* Game info and instructions - REPURPOSED AS A SMALL HOVER PANEL */
+#instructions-panel {
+    position: fixed;
+    bottom: 15px; /* Positioned at the bottom left */
+    left: 15px;
+    z-index: 20;
+    transition: all 0.3s ease-in-out;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.2); /* Very subtle background initially */
+    padding: 5px;
+}
+
+#instructions-panel:hover {
+    background-color: rgba(255, 255, 255, 0.9); /* More opaque on hover */
+    padding: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+#instructions-content {
+    display: none; /* Hidden by default */
+    font-size: 0.8rem;
+    line-height: 1.3;
+    color: #333;
+}
+
+#instructions-panel:hover #instructions-content {
+    display: block; /* Show on hover */
+}
+
+#instructions-panel #instructions-content p:last-child {
+    /* Style for the "(Hover here for instructions)" text */
+    font-size: 0.9rem;
+    color: #555;
+    margin-top: 5px;
+}
+
+#instructions-panel:not(:hover) #instructions-content p:last-child {
+    display: block; /* Ensure only the "Hover here" text is visible initially */
+    font-size: 0.9rem;
+    color: #333; /* Make it more visible when instructions are collapsed */
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 5px 8px;
+    border-radius: 5px;
+}
+
+#instructions-panel:hover #instructions-content p:last-child {
+    display: none; /* Hide the "(Hover here...)" when instructions are shown */
+} 

@@ -8,20 +8,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div id="game-hud">
+        <h1 id="hud-logo">POOPLORD</h1>
+        <div id="score-display">Score: 0</div>
+    </div>
+
     <div id="game-container">
         <!-- Google Map will be here -->
         <div id="character">💩</div>
-        <div id="score-display">Score: 0</div>
-        <div id="game-info">
-            <h1>POOPLORD</h1>
-            <div id="instructions">
-                <p>Eat food items! Avoid non-edibles!</p>
-                <p>Desktop: Use arrow keys or WASD to move</p>
-                <p>Mobile: Drag Pooplord to move</p>
-            </div>
-        </div>
-        <button id="leaderboard-button">🏆 Leaderboard</button>
+        <!-- Removed original score-display and game-info h1 from here -->
     </div>
+
+    <div id="instructions-panel">
+        <div id="instructions-content">
+            <p><strong>How to Play:</strong></p>
+            <p>Eat food (🍎🍌🍕) to grow!</p>
+            <p>Avoid non-edibles (💉💊💣)!</p>
+            <p>Desktop: Arrow keys or WASD to move.</p>
+            <p>Mobile: Drag Pooplord to move.</p>
+            <p>(Hover here for instructions)</p>
+        </div>
+    </div>
+
+    <button id="leaderboard-button">🏆 Leaderboard</button>
 
     <!-- Leaderboard Modal -->
     <div id="leaderboard-modal" class="modal">
@@ -50,7 +59,7 @@
 
     <!-- This script tag will be replaced during build -->
     <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
+        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=geometry&callback=initMap">
     </script>
     <script src="script.js"></script>
 </body>

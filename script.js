@@ -115,6 +115,15 @@ function handleItemCollision(item, index) {
         }
         character.classList.add('hurt');
         setTimeout(() => character.classList.remove('hurt'), 300);
+
+        // Apply drugged effect for needles and pills
+        if (item.type.emoji === '💉' || item.type.emoji === '💊') {
+            character.classList.add('drugged-effect');
+            // Remove the class after the animation duration (1s) to allow re-triggering
+            setTimeout(() => {
+                character.classList.remove('drugged-effect');
+            }, 1000); // Matches CSS animation duration
+        }
     }
 
     // Remove the marker from the map

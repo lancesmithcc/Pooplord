@@ -49,11 +49,11 @@ html, body {
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%); /* Base centering */
     user-select: none; /* Prevent text selection when dragging */
     cursor: grab;
     z-index: 10; /* Ensure character is above other elements */
-    transition: all 0.2s ease-out; /* Smooth size/position changes */
+    transition: font-size 0.2s ease-out; /* Smooth size changes, removed 'all' to avoid conflict with animation transforms */
     filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7)); /* Brown shadow */
 }
 
@@ -67,6 +67,10 @@ html, body {
 
 #character.hurt {
     animation: shake 0.3s;
+}
+
+#character.drugged-effect {
+    animation: spinAndColorChange 1s ease-out; /* Apply the animation */
 }
 
 /* Game items styles */
@@ -217,5 +221,27 @@ html, body {
     100% {
         opacity: 0;
         transform: scale(2.5);
+    }
+}
+
+/* New animation for drug effect */
+@keyframes spinAndColorChange {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+        filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7)) hue-rotate(0deg);
+    }
+    25% {
+        filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7)) hue-rotate(90deg);
+    }
+    50% {
+        transform: translate(-50%, -50%) rotate(180deg);
+        filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7)) hue-rotate(180deg);
+    }
+    75% {
+        filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7)) hue-rotate(270deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+        filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7)) hue-rotate(360deg);
     }
 } 

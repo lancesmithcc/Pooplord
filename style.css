@@ -1,0 +1,285 @@
+body {
+    margin: 0;
+    overflow: hidden; /* Prevent scrollbars from map */
+    font-family: 'Comic Neue', cursive;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+}
+
+/* Animation keyframes */
+@keyframes wiggle {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(5deg); }
+    50% { transform: rotate(0deg); }
+    75% { transform: rotate(-5deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(0); }
+    75% { transform: translateX(5px); }
+    100% { transform: translateX(0); }
+}
+
+@keyframes float {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0); }
+}
+
+#game-container {
+    width: 80vw; /* Adjust as needed */
+    height: 80vh; /* Adjust as needed */
+    max-width: 800px;
+    max-height: 600px;
+    border: 2px solid #333;
+    border-radius: 15px;
+    position: relative; /* For positioning character and items */
+    background-color: #ddd; /* Placeholder until map loads */
+    overflow: hidden; /* Keep items within bounds */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+#character {
+    font-size: 2rem; /* Initial size */
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    user-select: none; /* Prevent text selection when dragging */
+    cursor: grab;
+    z-index: 10; /* Ensure character is above other elements */
+    transition: all 0.2s ease-out; /* Smooth size/position changes */
+    filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7)); /* Brown shadow */
+}
+
+#character.moving {
+    animation: wiggle 0.5s infinite;
+}
+
+#character.eating {
+    animation: pulse 0.3s;
+}
+
+#character.hurt {
+    animation: shake 0.3s;
+}
+
+/* Game items styles */
+.game-item {
+    position: absolute;
+    user-select: none;
+    transition: transform 0.1s ease-out; /* Smooth movement */
+    animation: float 3s infinite ease-in-out; /* Items float up and down */
+}
+
+.food-item {
+    filter: drop-shadow(0 0 3px rgba(0, 255, 0, 0.5)); /* Green glow for food */
+}
+
+.food-item:hover {
+    transform: scale(1.2);
+}
+
+.non-edible-item {
+    filter: drop-shadow(0 0 3px rgba(255, 0, 0, 0.5)); /* Red glow for non-edibles */
+}
+
+.non-edible-item:hover {
+    transform: scale(0.9) rotate(10deg);
+}
+
+/* Game info and instructions */
+#game-info {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border-radius: 10px;
+    z-index: 20;
+    max-width: 300px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    border: 2px solid #333;
+    transition: opacity 0.3s ease;
+}
+
+#game-info h1 {
+    margin: 0 0 10px 0;
+    color: #8B4513; /* Brown color for Pooplord */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+    font-size: 1.8rem;
+}
+
+#instructions {
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+
+#instructions p {
+    margin: 5px 0;
+}
+
+/* Score display */
+#score-display {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 20;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-family: 'Comic Neue', cursive;
+    font-weight: bold;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    border: 2px solid #222;
+}
+
+.points-popup {
+    font-family: 'Comic Neue', cursive;
+    font-size: 1.5rem;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+    pointer-events: none;
+    font-weight: bold;
+}
+
+/* Leaderboard button */
+#leaderboard-button {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background-color: #FFD700;
+    color: #333;
+    border: 2px solid #333;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-family: 'Comic Neue', cursive;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 20;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+#leaderboard-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #f8f8f8;
+    padding: 20px;
+    border: 3px solid #333;
+    border-radius: 15px;
+    width: 80%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    font-family: 'Comic Neue', cursive;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.close-button {
+    color: #333;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+}
+
+.close-button:hover {
+    color: #8B4513;
+}
+
+/* Leaderboard table */
+#leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+#leaderboard-table th,
+#leaderboard-table td {
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+#leaderboard-table th {
+    background-color: #8B4513;
+    color: white;
+}
+
+#leaderboard-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#leaderboard-table tr:hover {
+    background-color: #e0e0e0;
+}
+
+/* Save score form */
+#save-score-form {
+    margin-top: 20px;
+    text-align: center;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+}
+
+#player-name {
+    padding: 8px;
+    margin-right: 10px;
+    border: 2px solid #8B4513;
+    border-radius: 5px;
+    font-family: 'Comic Neue', cursive;
+}
+
+#save-score-button {
+    padding: 8px 15px;
+    background-color: #8B4513;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Comic Neue', cursive;
+    font-weight: bold;
+}
+
+#save-score-button:hover {
+    background-color: #a05c1b;
+}
+
+/* We'll add more styles for items, map, score, etc. later */ 

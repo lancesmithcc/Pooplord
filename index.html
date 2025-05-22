@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pooplord</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Google Map will be here -->
+        <div id="character">💩</div>
+        <div id="score-display">Score: 0</div>
+        <div id="game-info">
+            <h1>POOPLORD</h1>
+            <div id="instructions">
+                <p>Eat food items! Avoid non-edibles!</p>
+                <p>Desktop: Use arrow keys or WASD to move</p>
+                <p>Mobile: Drag Pooplord to move</p>
+            </div>
+        </div>
+        <button id="leaderboard-button">🏆 Leaderboard</button>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Pooplord Leaderboard</h2>
+            <table id="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <!-- Leaderboard entries will be added here -->
+                </tbody>
+            </table>
+            <div id="save-score-form">
+                <h3>Save Your Score</h3>
+                <input type="text" id="player-name" placeholder="Enter your name" maxlength="15">
+                <button id="save-score-button">Save Score</button>
+            </div>
+        </div>
+    </div>
+
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
+    </script>
+    <script src="script.js"></script>
+</body>
+</html> 

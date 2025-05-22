@@ -42,4 +42,18 @@ A fun game where you control a poop emoji walking through town (overlayed on the
 - Built with vanilla JavaScript, HTML, and CSS
 - Uses Google Maps JavaScript API
 - Stores leaderboard data in localStorage
-- Runs on a simple Express server that injects the API key from environment variables 
+- Runs on a simple Express server that injects the API key from environment variables
+
+## Deployment on Netlify
+
+1. Push your code to a GitHub repository
+2. Log in to Netlify and click "New site from Git"
+3. Select your repository
+4. Configure build settings:
+   - Build command: `npm run build`
+   - Publish directory: `./`
+5. Add environment variable:
+   - Go to Site settings > Build & deploy > Environment > Environment variables
+   - Add `GOOGLE_MAPS_API` with your API key value
+6. Make sure your API key has `https://pooplord.netlify.app` listed as an authorized domain in the Google Cloud Console
+7. Deploy the site! 

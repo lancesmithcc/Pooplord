@@ -1,0 +1,11 @@
+[build]
+  # Directory to publish (static site)
+  publish = "./"
+  # Command to build your site
+  command = "npm run build"
+
+# Redirect all traffic to index.html for SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200 

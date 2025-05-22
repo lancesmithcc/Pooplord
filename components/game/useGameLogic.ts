@@ -40,8 +40,8 @@ interface GameState {
 }
 
 const REM_TO_PX = 16;
-const MIN_CHAR_SIZE = 0.5; MAX_CHAR_SIZE = 5;
-const MIN_CHAR_SPEED = 0.00002; MAX_CHAR_SPEED = 0.0003; // Speed in LatLng degrees
+const MIN_CHAR_SIZE = 0.5; const MAX_CHAR_SIZE = 5;
+const MIN_CHAR_SPEED = 0.00002; const MAX_CHAR_SPEED = 0.0003; // Speed in LatLng degrees
 const ITEM_MAX_SPEED_LATLNG = 0.000015;
 const ITEM_ANIMATION_DURATION = 300;
 const ITEM_SIZE_PX = 1.5 * REM_TO_PX;

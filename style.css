@@ -244,4 +244,27 @@ html, body {
         transform: translate(-50%, -50%) rotate(360deg);
         filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7)) hue-rotate(360deg);
     }
+}
+
+#sound-controls {
+    position: absolute;
+    top: 10px; /* Adjust as needed */
+    right: 120px; /* Adjust to place it next to the score */
+    display: flex;
+    gap: 10px;
+}
+
+#sound-controls button {
+    background-color: rgba(40, 40, 40, 0.8);
+    color: #fff;
+    border: 1px solid #fff;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Comic Neue', cursive;
+    font-size: 0.9rem;
+}
+
+#sound-controls button:hover {
+    background-color: rgba(60, 60, 60, 0.9);
 } 

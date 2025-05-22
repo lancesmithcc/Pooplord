@@ -67,4 +67,24 @@
 - [ ] Add sound effects for eating, getting hurt, and game events.
 - [ ] Polish UI/UX further (e.g., game over screen, restart button).
 - [ ] Consider adding different types of food/hazards with more varied effects.
-- [ ] Explore adding "enemy" AI poops or other challenges. 
+- [ ] Explore adding "enemy" AI poops or other challenges.
+- [x] Update `README.md` with Netlify deployment instructions.
+- [x] Make map full page.
+- [x] Implement dark mode for the map.
+- [x] Implement camera follow for the character.
+- [x] Change items to be Google Maps Markers.
+- [x] Refine HUD: Clear "POOPLORD" logo and score, overlaid on map.
+- [x] Ensure map and movement are working correctly.
+- [x] Make item emojis appear correctly (no default pin, larger size).
+- [ ] Implement item movement along roads using Google Maps Directions Service.
+- [ ] Add button to toggle background music.
+- [ ] Add button to toggle game sounds (fart sounds, speech synthesis).
+- [ ] Ensure audio works on mobile after user interaction with new buttons.
+
+### Later / Optional
+*   Consider leaderboard alternatives if desired.
+*   Advanced item behaviors (e.g., fleeing, chasing).
+*   Power-ups with temporary special abilities.
+*   Different map themes/styles.
+*   Achievements or challenges.
+*   Multiplayer mode (very complex). 

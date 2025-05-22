@@ -35,6 +35,12 @@ const milestonePhrases = ["oh crap yeah", "cool poo man", "super duty!"];
 const scoreDisplay = document.getElementById('score-display');
 // const gameInfo = document.getElementById('game-info'); // game-info is no longer used in JS
 
+// Sound toggle states and button elements
+let isMusicOn = true;
+let areSfxOn = true;
+const musicToggleButton = document.getElementById('music-toggle-btn');
+const sfxToggleButton = document.getElementById('sfx-toggle-btn');
+
 // Logic for old game-info panel (now instructions-panel, CSS handled)
 /*
 const hideInstructionsTimeout = setTimeout(() => {
@@ -770,33 +776,74 @@ function adaptUIForDevice() {
 
 // Function to play a random fart sound
 function playRandomFartSound() {
-    if (fartSounds.length > 0) {
-        const randomIndex = Math.floor(Math.random() * fartSounds.length);
-        const soundToPlay = fartSounds[randomIndex];
-        const soundEffect = new Audio(soundToPlay);
-        soundEffect.volume = 0.7; // Adjust volume for sound effects if needed
-        soundEffect.play().catch(error => console.error(`Error playing sound ${soundToPlay}:`, error));
-    }
+    if (!areSfxOn || fartSounds.length === 0) return; // Check if SFX are enabled
+    const randomIndex = Math.floor(Math.random() * fartSounds.length);
+    const soundToPlay = fartSounds[randomIndex];
+    const soundEffect = new Audio(soundToPlay);
+    soundEffect.volume = 0.7; // Adjust volume for sound effects if needed
+    soundEffect.play().catch(error => console.error(`Error playing sound ${soundToPlay}:`, error));
 }
 
 // Function to make the browser speak text
 function speakText(textToSpeak) {
-    if ('speechSynthesis' in window) {
-        // Cancel any previous utterances to prevent overlap / queue buildup
-        window.speechSynthesis.cancel(); 
-        
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        // Optional: Configure voice, pitch, rate
-        // utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === 'Google UK English Male'); // Example voice
-        utterance.pitch = 1.8; // 0 to 2, default is 1. Higher is more high-pitched.
-        // utterance.rate = 1; // 0.1 to 10
-        // utterance.volume = 1; // 0 to 1 (already default)
-        
-        window.speechSynthesis.speak(utterance);
-    } else {
-        console.warn("Web Speech API (Text-to-Speech) not supported by this browser.");
-    }
+    if (!areSfxOn || !('speechSynthesis' in window)) return; // Check if SFX are enabled
+
+    // Cancel any previous utterances to prevent overlap / queue buildup
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    // Optional: Configure voice, pitch, rate
+    // utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === 'Google UK English Male'); // Example voice
+    utterance.pitch = 1.8; // 0 to 2, default is 1. Higher is more high-pitched.
+    // utterance.rate = 1; // 0.1 to 10
+    // utterance.volume = 1; // 0 to 1 (already default)
+    
+    window.speechSynthesis.speak(utterance);
 }
 
-// Call initMap or a similar function if Google Maps API is not yet integrated
-// ... existing code ... 
+// Event listeners for sound toggle buttons
+if (musicToggleButton) {
+    musicToggleButton.addEventListener('click', () => {
+        isMusicOn = !isMusicOn;
+        musicToggleButton.textContent = isMusicOn ? '🎵 Music: On' : '🎵 Music: Off';
+        if (backgroundMusic) {
+            if (isMusicOn) {
+                if (hasUserInteracted && backgroundMusic.paused) { // Only play if user has interacted and it's paused
+                    backgroundMusic.play().catch(error => console.error("Error playing background music (toggle):", error));
+                }
+            } else {
+                backgroundMusic.pause();
+            }
+        }
+        // Ensure user interaction flag is set if music is turned on via button
+        if (isMusicOn && !hasUserInteracted) {
+            hasUserInteracted = true; 
+            // Attempt to play if paused, as this is now a valid user interaction
+            if (backgroundMusic && backgroundMusic.paused) {
+                 backgroundMusic.play().catch(error => console.error("Error playing background music (initial toggle):", error));
+            }
+        }
+    });
+}
+
+if (sfxToggleButton) {
+    sfxToggleButton.addEventListener('click', () => {
+        areSfxOn = !areSfxOn;
+        sfxToggleButton.textContent = areSfxOn ? '🔊 SFX: On' : '🔊 SFX: Off';
+        // If SFX are turned off, cancel any ongoing speech
+        if (!areSfxOn && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+         // Ensure user interaction flag is set if sfx are turned on via button
+        if (areSfxOn && !hasUserInteracted) {
+           hasUserInteracted = true;
+        }
+    });
+}
+
+// Ensure that initMap is called after the DOM is fully loaded, including the new buttons
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialization that depends on DOM elements can go here
+    // For example, attaching event listeners to buttons if not already done globally
+    // The Google Maps API script will call window.initMap itself once it's loaded.
+}); 

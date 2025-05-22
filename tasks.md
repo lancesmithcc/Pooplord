@@ -48,9 +48,18 @@
 - [ ] **Power-ups:**
     - [ ] Special items that give temporary boosts or abilities.
 - [X] **Leaderboards:**
-    - [X] Allow players to compete for high scores. 
+    - [X] Allow players to compete for high scores.
 
 **Project Infrastructure**
 - [X] **Environment Variables:**
     - [X] Set up server to load Google Maps API key from .env file
-    - [X] Create package.json with necessary dependencies 
+    - [X] Create package.json with necessary dependencies
+- [x] Make items appear as map markers (emojis) without default pin, increased emoji size.
+- [x] Load Google Maps `directions` library.
+- [x] Implement item movement along roads using `DirectionsService`.
+- [ ] Refine item spawning to be on or near roads.
+- [ ] Ensure collision detection works with moving items.
+- [ ] Add sound effects for eating, getting hurt, and game events.
+- [ ] Polish UI/UX further (e.g., game over screen, restart button).
+- [ ] Consider adding different types of food/hazards with more varied effects.
+- [ ] Explore adding "enemy" AI poops or other challenges. 

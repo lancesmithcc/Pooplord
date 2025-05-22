@@ -9,7 +9,7 @@
 </head>
 <body>
     <div id="game-hud">
-        <h1 id="hud-logo">POOPLORD</h1>
+        <h1 id="hud-logo">💩 POOPLORD</h1>
         <div id="score-display">Score: 0</div>
     </div>
 
@@ -31,10 +31,13 @@
 
     <!-- Leaderboard button and modal removed -->
 
-    <!-- This script tag will be replaced during build -->
-    <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=geometry&callback=initMap">
-    </script>
+    <!-- Our main game script, loaded first -->
     <script src="script.js"></script>
+    
+    <!-- Google Maps API script, calls initMap AFTER script.js is parsed -->
+    <!-- This script tag will be replaced during build -->
+    <script async
+        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=geometry,directions&callback=initMap">
+    </script>
 </body>
 </html> 

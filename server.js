@@ -19,8 +19,8 @@ app.get('/', (req, res) => {
         // Replace the API key in the Google Maps script tag
         // This handles the multi-line script tag format
         const modifiedHtml = data.replace(
-            /src="https:\/\/maps\.googleapis\.com\/maps\/api\/js\?key=YOUR_API_KEY&libraries=geometry&callback=initMap">/g, 
-            `src="https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry&callback=initMap">`
+            /<script async\s+src="https:\/\/maps\.googleapis\.com\/maps\/api\/js\?key=YOUR_API_KEY&libraries=geometry,directions&callback=initMap">/g, 
+            `<script async src="https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,directions&callback=initMap">`
         );
         
         res.send(modifiedHtml);

@@ -16,6 +16,8 @@ let map; // Google Map instance
 let score = 0; // Player's score
 let characterSize = 2; // Character size multiplier (starts at 2rem)
 let characterStrength = 10; // Character's strength
+let directionsService;
+let directionsRenderer;
 
 // Get score display element from the DOM
 const scoreDisplay = document.getElementById('score-display');
@@ -124,9 +126,20 @@ function startCollisionDetection() {
 }
 
 // Google Maps initialization
-function initMap() {
+// Make sure initMap is globally available for the Google Maps API callback
+window.initMap = function() {
     console.log("Google Maps API loaded. Initializing map...");
     
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: true, // We use our own markers
+        preserveViewport: true, // Don't zoom to fit the route
+        polylineOptions: {
+            strokeColor: "transparent", // Make the route line invisible
+            strokeOpacity: 0
+        }
+    });
+
     // Check if geolocation is supported by the browser
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -227,6 +240,8 @@ function initMap() {
                     ]
                 });
                 
+                directionsRenderer.setMap(map); // Attach renderer to the map
+                
                 // Make sure character stays on top of the map
                 gameContainer.appendChild(character);
                 
@@ -247,29 +262,35 @@ function initMap() {
                     center: defaultLocation,
                     zoom: 17,
                     disableDefaultUI: true,
-                    styles: [ // Apply dark mode to fallback map too
-                        { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                    styles: [ // Duplicating styles for fallback, consider refactoring
+                         // Custom Dark Mode Map Style (Charcoal, Brown, Green)
+                        { elementType: "geometry", stylers: [{ color: "#242f3e" }] }, // Charcoal base
                         { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-                        { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+                        { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] }, // Brownish labels
                         {
                             featureType: "administrative.locality",
                             elementType: "labels.text.fill",
-                            stylers: [{ color: "#d59563" }],
+                            stylers: [{ color: "#d59563" }], // Lighter brown for locality
                         },
                         {
-                            featureType: "poi.park",
+                            featureType: "poi", // Points of Interest
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#938170" }], // Muted brown for POI labels
+                        },
+                        {
+                            featureType: "poi.park", // Parks will be green
                             elementType: "geometry",
-                            stylers: [{ color: "#263c3f" }],
+                            stylers: [{ color: "#263c3f" }], // Dark green for park geometry
                         },
                         {
                             featureType: "poi.park",
                             elementType: "labels.text.fill",
-                            stylers: [{ color: "#6b9a76" }],
+                            stylers: [{ color: "#6b9a76" }], // Lighter green for park labels
                         },
                         {
                             featureType: "road",
                             elementType: "geometry",
-                            stylers: [{ color: "#38414e" }],
+                            stylers: [{ color: "#38414e" }], // Darker charcoal for roads
                         },
                         {
                             featureType: "road",
@@ -279,25 +300,52 @@ function initMap() {
                         {
                             featureType: "road",
                             elementType: "labels.text.fill",
-                            stylers: [{ color: "#9ca5b3" }],
+                            stylers: [{ color: "#9ca5b3" }], // Light grey for road labels
                         },
                         {
                             featureType: "road.highway",
                             elementType: "geometry",
-                            stylers: [{ color: "#746855" }],
+                            stylers: [{ color: "#746855" }], // Brown for highways
+                        },
+                        {
+                            featureType: "road.highway",
+                            elementType: "geometry.stroke",
+                            stylers: [{ color: "#1f2835" }],
+                        },
+                        {
+                            featureType: "road.highway",
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#f3d19c" }], // Light brownish/yellow for highway labels
+                        },
+                        {
+                            featureType: "transit",
+                            elementType: "geometry",
+                            stylers: [{ color: "#2f3948" }],
+                        },
+                        {
+                            featureType: "transit.station",
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#d59563" }],
                         },
                         {
                             featureType: "water",
                             elementType: "geometry",
-                            stylers: [{ color: "#17263c" }],
+                            stylers: [{ color: "#17263c" }], // Dark blue/charcoal for water
                         },
                         {
                             featureType: "water",
                             elementType: "labels.text.fill",
                             stylers: [{ color: "#515c6d" }],
-                        }
+                        },
+                        {
+                            featureType: "water",
+                            elementType: "labels.text.stroke",
+                            stylers: [{ color: "#17263c" }],
+                        },
                     ]
                 });
+                
+                directionsRenderer.setMap(map); // Attach renderer to the map for fallback
                 
                 gameContainer.appendChild(character);
                 initializeCharacterPosition();
@@ -341,46 +389,114 @@ const collisionCheckInterval = 100; // How often to check for collisions
 const itemSpawnRadius = 500; // Meters from map center to spawn items
 const collisionRadius = 20; // Meters from character (map center) to trigger collision
 
-// Create and add an item to the map as a Google Maps Marker
+// Define item types with their properties
+const itemTypes = {
+    food: [
+        { emoji: '🍎', points: 10, sizeIncrease: 0.2, effect: 'grow' },
+        { emoji: '🍌', points: 15, sizeIncrease: 0.3, effect: 'grow' },
+        { emoji: '🍔', points: 20, sizeIncrease: 0.4, effect: 'grow' },
+        { emoji: '🍕', points: 25, sizeIncrease: 0.5, effect: 'grow' },
+        { emoji: '🍩', points: 30, sizeIncrease: 0.6, effect: 'grow' }
+    ],
+    nonEdible: [
+        { emoji: '💉', points: -10, sizeDecrease: 0.2, effect: 'shrink' },
+        { emoji: '💊', points: -15, sizeDecrease: 0.3, effect: 'shrink' },
+        { emoji: '💣', points: -20, sizeDecrease: 0.4, effect: 'shrink' },
+        { emoji: '💥', points: -25, sizeDecrease: 0.5, effect: 'shrink' },
+        { emoji: '☠️', points: -30, sizeDecrease: 0.6, effect: 'shrink' }
+    ]
+};
+
+// Create and place a new item (marker) on the map
 function createItem(isFood = true) {
-    if (allItemsOnMap.length >= maxItems || !map) return;
+    if (!map || !directionsService) return;
 
-    const itemsArray = isFood ? foodItems : nonEdibleItems;
-    const itemType = itemsArray[Math.floor(Math.random() * itemsArray.length)];
+    const itemTypeArray = isFood ? itemTypes.food : itemTypes.nonEdible;
+    const randomType = itemTypeArray[Math.floor(Math.random() * itemTypeArray.length)];
 
-    // Calculate a random LatLng position near the map center
-    const mapCenter = map.getCenter();
-    const randomAngle = Math.random() * 360;
-    const randomDistance = Math.random() * itemSpawnRadius; // Spawn within X meters
-    const itemLatLng = google.maps.geometry.spherical.computeOffset(mapCenter, randomDistance, randomAngle);
+    // Spawn items within a certain radius of the map center (player)
+    const center = map.getCenter();
+    const spawnRadius = 1000; // meters from center
 
-    const marker = new google.maps.Marker({
-        position: itemLatLng,
-        map: map,
-        // icon: itemType.emoji, // Not directly supported, need to use custom icon or label
-        label: {
-            text: itemType.emoji,
-            fontSize: '24px',
-            className: isFood ? 'food-item-label' : 'non-edible-item-label' // For potential styling
-        },
-        // title: itemType.name // Shows on hover
-        // We can make custom icons later if needed for better visuals
-        zIndex: 5 // Ensure items are interactable but don't obscure character too much
-    });
+    // Attempt to find a random point on a road
+    const randomBearing = Math.random() * 360;
+    const randomDist = Math.random() * spawnRadius;
+    const originPoint = google.maps.geometry.spherical.computeOffset(center, randomDist, randomBearing);
 
-    const itemData = {
-        marker: marker, // Store the marker object
-        type: itemType,
-        isFood: isFood,
-        latLng: itemLatLng // Store LatLng for distance calculations
-        // x, y, vx, vy, size, element are no longer needed in the same way
+    // For destination, pick another random point, somewhat further away
+    const destBearing = Math.random() * 360;
+    const destDist = (Math.random() * 500) + 500; // 500-1000m away
+    const destinationPoint = google.maps.geometry.spherical.computeOffset(originPoint, destDist, destBearing);
+    
+    const request = {
+        origin: originPoint,
+        destination: destinationPoint,
+        travelMode: google.maps.TravelMode.DRIVING
     };
 
-    allItemsOnMap.push(itemData);
-    return itemData;
+    directionsService.route(request, function(result, status) {
+        if (status == google.maps.DirectionsStatus.OK) {
+            const route = result.routes[0];
+            if (!route || !route.overview_path || route.overview_path.length === 0) {
+                console.warn("Could not find a route or route is empty for item, spawning at random point.");
+                // Fallback: spawn at originPoint without a route
+                spawnMarkerAtPoint(randomType, isFood, originPoint, null);
+                return;
+            }
+
+            // Spawn marker at the start of the route
+            const startLatLng = route.overview_path[0];
+            spawnMarkerAtPoint(randomType, isFood, startLatLng, route);
+
+        } else {
+            console.error('Directions request failed due to ' + status + '. Spawning item at random point.');
+            // Fallback: spawn at originPoint without a route if directions fail
+            spawnMarkerAtPoint(randomType, isFood, originPoint, null);
+        }
+    });
 }
 
-// Spawn items periodically
+function spawnMarkerAtPoint(itemTypeDetails, isFood, positionLatLng, route) {
+    const marker = new google.maps.Marker({
+        position: positionLatLng,
+        map: map,
+        label: {
+            text: itemTypeDetails.emoji,
+            fontSize: '24px', // Make emoji larger
+            color: 'black' // Ensure visibility against various backgrounds
+        },
+        icon: { // Hide default pin
+            url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', // 1x1 transparent PNG
+            scaledSize: new google.maps.Size(1, 1),
+            anchor: new google.maps.Point(0, 0),
+        },
+        // Custom properties
+        isFood: isFood,
+        type: itemTypeDetails,
+        latLng: positionLatLng, // Store LatLng for easier access
+        route: route, // Store the route for this item
+        routeStep: 0, // Current step in the route
+        animationStartTime: performance.now(),
+        animationDuration: route && route.legs && route.legs[0].duration ? route.legs[0].duration.value * 1000 : 5000 // milliseconds, default 5s if no route
+    });
+
+    allItemsOnMap.push(marker);
+
+    // Add CSS animation for floating effect
+    // This requires a DOM element, which markers are not directly.
+    // We'll achieve visual movement by updating marker position.
+    // The "float" animation will be handled by the moveItems function.
+
+    if (route) {
+        // If there's a route, movement will be handled by moveItems based on route.overview_path
+        // console.log("Item spawned on route:", marker.type.emoji, marker.latLng.toString());
+    } else {
+        // If no route, maybe a simple fallback movement or stationary
+        // console.log("Item spawned at point (no route):", marker.type.emoji, marker.latLng.toString());
+    }
+}
+
+// Start spawning items
 function startItemSpawning() {
     setInterval(() => {
         // 70% chance of spawning food, 30% chance of spawning non-edible
@@ -391,8 +507,87 @@ function startItemSpawning() {
 
 // Move all items on the map - FOR NOW, ITEMS ARE STATIONARY MARKERS
 function moveItems() {
-    // This function will need to be re-thought if items are to move as markers.
-    // For now, markers are stationary. Their LatLng is fixed unless we update it.
+    if (!map) return;
+    const now = performance.now();
+
+    for (let i = allItemsOnMap.length - 1; i >= 0; i--) {
+        const itemMarker = allItemsOnMap[i];
+
+        if (itemMarker.route && itemMarker.route.overview_path && itemMarker.route.overview_path.length > 0) {
+            const route = itemMarker.route;
+            const path = route.overview_path;
+            
+            // Calculate how far along the path the item should be
+            // This is a simple linear interpolation along the path segments.
+            // A more robust approach would consider time and speed for each segment.
+            
+            let elapsedTime = now - itemMarker.animationStartTime;
+            if (elapsedTime >= itemMarker.animationDuration) {
+                elapsedTime = itemMarker.animationDuration; // Cap at duration
+            }
+            
+            const progress = elapsedTime / itemMarker.animationDuration; // 0 to 1
+
+            if (progress >= 1) { // Reached end of its current path segment or full path
+                // For now, let's make it stationary or despawn/respawn
+                // If we want continuous movement, we'd need to request a new route here or make it loop.
+                // For simplicity, we'll just keep it at the end of its short path for now.
+                 if (path.length > 0) {
+                    itemMarker.setPosition(path[path.length - 1]);
+                    itemMarker.latLng = path[path.length - 1];
+                 }
+                // Or, remove and respawn:
+                // itemMarker.setMap(null);
+                // allItemsOnMap.splice(i, 1);
+                // createItem(itemMarker.isFood);
+                continue; 
+            }
+
+            // Find the current position on the polyline
+            // This is a simplified interpolation. Google's geometry library might have better tools.
+            const totalPathDistance = google.maps.geometry.spherical.computeLength(path);
+            const distanceToTravel = totalPathDistance * progress;
+            
+            let currentCumulativeDistance = 0;
+            let targetPosition = path[0];
+
+            for (let j = 0; j < path.length - 1; j++) {
+                const segmentStart = path[j];
+                const segmentEnd = path[j+1];
+                const segmentDistance = google.maps.geometry.spherical.computeDistanceBetween(segmentStart, segmentEnd);
+
+                if (currentCumulativeDistance + segmentDistance >= distanceToTravel) {
+                    const distanceIntoSegment = distanceToTravel - currentCumulativeDistance;
+                    const fractionIntoSegment = distanceIntoSegment / segmentDistance;
+                    targetPosition = google.maps.geometry.spherical.interpolate(segmentStart, segmentEnd, fractionIntoSegment);
+                    break;
+                }
+                currentCumulativeDistance += segmentDistance;
+                if (j === path.length - 2) { // If we are at the last segment
+                     targetPosition = path[path.length -1]; // Go to the end
+                }
+            }
+            
+            if(targetPosition) {
+                itemMarker.setPosition(targetPosition);
+                itemMarker.latLng = targetPosition; // Update stored LatLng
+            }
+
+        } else {
+            // Fallback for items without a route (e.g., random float or stationary)
+            // Simple floating animation (vertical bobbing)
+            const floatAmplitude = 0.00001; // Small change in latitude for bobbing
+            const floatSpeed = 0.002; // Adjust for desired speed
+            const newLat = itemMarker.get('originalLat') || itemMarker.getPosition().lat();
+            if(!itemMarker.get('originalLat')) itemMarker.set('originalLat', newLat);
+
+            itemMarker.setPosition(new google.maps.LatLng(
+                newLat + Math.sin(now * floatSpeed) * floatAmplitude,
+                itemMarker.getPosition().lng()
+            ));
+            itemMarker.latLng = itemMarker.getPosition();
+        }
+    }
 }
 
 // Start item movement

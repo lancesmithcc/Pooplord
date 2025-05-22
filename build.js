@@ -10,8 +10,8 @@ let htmlContent = fs.readFileSync(indexPath, 'utf8');
 
 // Replace the placeholder with the actual API key
 htmlContent = htmlContent.replace(
-  /src="https:\/\/maps\.googleapis\.com\/maps\/api\/js\?key=YOUR_API_KEY&libraries=geometry&callback=initMap">/g,
-  `src="https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry&callback=initMap">`
+  /<script async\s+src="https:\/\/maps\.googleapis\.com\/maps\/api\/js\?key=YOUR_API_KEY&libraries=geometry,directions&callback=initMap">/g,
+  `<script async src="https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,directions&callback=initMap">`
 );
 
 // Write the modified content back to index.html

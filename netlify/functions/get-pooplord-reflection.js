@@ -26,7 +26,7 @@ exports.handler = async function(event, context) {
         return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) };
     }
 
-    const { eatenItems } = requestBody;
+    let { eatenItems } = requestBody;
 
     if (!eatenItems || !Array.isArray(eatenItems) || eatenItems.length === 0) {
         return {
@@ -35,17 +35,24 @@ exports.handler = async function(event, context) {
         };
     }
 
-    const consumedMushroom = eatenItems.includes('🍄');
+    const MAX_ITEMS_FOR_PROMPT = 7;
+    let itemsForPrompt = eatenItems;
+    if (eatenItems.length > MAX_ITEMS_FOR_PROMPT) {
+        itemsForPrompt = eatenItems.slice(-MAX_ITEMS_FOR_PROMPT);
+        console.log(`Original eatenItems count: ${eatenItems.length}, using last ${MAX_ITEMS_FOR_PROMPT} for prompt.`);
+    }
+
+    const consumedMushroom = itemsForPrompt.includes('🍄');
     let prompt;
 
     if (consumedMushroom) {
-        prompt = `You are Pooplord, a sentient poop emoji, currently experiencing a cosmic awakening after consuming a mystical mushroom (🍄). The other items you ate recently were: ${eatenItems.filter(item => item !== '🍄').join(', ') || 'nothing else of note'}. 
+        prompt = `You are Pooplord, a sentient poop emoji, currently experiencing a cosmic awakening after consuming a mystical mushroom (🍄). The other items you ate recently (up to a few) were: ${itemsForPrompt.filter(item => item !== '🍄').join(', ') || 'nothing else of note'}. 
         Unleash a torrent of profound, humorous, and slightly unhinged conspiracy theories and secrets of the universe, as only a philosophizing poop can. 
         Make it about 60-90 words. Use vivid poop and bathroom-related metaphors, mixed with cosmic and conspiratorial language. 
         For example: \"The mushroom! Oh, the veil is lifted! My earthy core now resonates with the brown noise of the cosmos! Did you know the moon is just a giant mothball, placed there by interdimensional plumbers to keep the space-mites from clogging the Milky Way's U-bend? And these other morsels... merely stardust transitioning through my magnificent colonic nebula. We are all just cosmic droppings in the great toilet of existence! It's all connected, man... by pipes!\" 
         Be wildly creative, funny, and revelatory.`;
     } else {
-        prompt = `You are Pooplord, a sentient poop emoji, prone to existential musings. You just consumed the following items: ${eatenItems.join(', ')}. 
+        prompt = `You are Pooplord, a sentient poop emoji, prone to existential musings. You just consumed the following items (up to a few): ${itemsForPrompt.join(', ')}. 
     Reflect on this experience in a single, short, humorous paragraph (around 60-80 words). 
     Ponder your existence, sentience, and the cycle of consumption, all while using vivid poop and bathroom-related metaphors. 
     Keep it lighthearted, absurd, and slightly philosophical. For example, if you ate a burger, you might muse: 

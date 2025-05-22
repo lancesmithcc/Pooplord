@@ -34,6 +34,10 @@ let currentReflectionText = ""; // Store fetched reflection for mobile button
 const thoughtBubbleContainer = document.getElementById('thought-bubble-container');
 const speakThoughtsBtn = document.getElementById('speak-thoughts-btn');
 
+// Log if thought bubble elements are found
+console.log("Thought Bubble Container:", thoughtBubbleContainer);
+console.log("Speak Thoughts Button:", speakThoughtsBtn);
+
 const itemSpawnInterval = 2000; // Spawn new item every 2 seconds
 const itemMovementInterval = 50; // Update item positions every 50ms for smoother animation
 const ITEM_WANDER_SPEED = 0.75; // Meters per movement interval (e.g., 0.75m every 50ms = 15 m/s)
@@ -604,7 +608,9 @@ function initializeItems() {
 
 // Utility function to check for mobile devices
 function isMobileDevice() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || navigator.maxTouchPoints > 0;
+    const mobileCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || navigator.maxTouchPoints > 0;
+    console.log("isMobileDevice check:", mobileCheck, "User Agent:", navigator.userAgent, "Max TouchPoints:", navigator.maxTouchPoints);
+    return mobileCheck;
 }
 
 function adaptUIForDevice() {
@@ -847,6 +853,7 @@ async function requestPooplordReflection() {
         console.log("Pooplord has eaten nothing recently. No reflection needed.");
         return;
     }
+    console.log("Is mobile device for reflection logic?", isMobileDevice()); // Log here too
 
     // If thought bubble is already showing for a previous reflection, don't fetch a new one yet.
     if (isMobileDevice() && thoughtBubbleContainer && !thoughtBubbleContainer.classList.contains('hidden')) {
@@ -877,9 +884,11 @@ async function requestPooplordReflection() {
             currentReflectionText = data.reflection; // Store for button
 
             if (isMobileDevice() && thoughtBubbleContainer) {
+                console.log("Mobile device detected, attempting to show thought bubble.");
                 thoughtBubbleContainer.classList.remove('hidden');
                 // `recentlyEatenItems` will be cleared when the button is clicked on mobile.
             } else {
+                console.log("Desktop device detected (or no thought bubble container), speaking directly.");
                 speakText(currentReflectionText);
                 recentlyEatenItems = []; // Clear for desktop after speaking
             }

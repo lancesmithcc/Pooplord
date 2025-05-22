@@ -86,6 +86,22 @@
 - [x] Move sound toggle buttons to the bottom of the screen.
 - [x] Add a 50% transparent brown multiply overlay to the map.
 
+**Phase 4: AI Pooplords & Advanced Gameplay**
+- [x] Track number of "person" items exploded by the player.
+- [x] Spawn an AI Pooplord for every 5 "person" items exploded.
+- [x] AI Pooplords should be visually similar to the main character (or slightly distinct if possible).
+- [x] AI Pooplords autonomously move towards "person" items.
+- [x] AI Pooplords "explode" "person" items on collision, adding to player's score.
+- [x] AI Pooplords find new "person" targets after exploding one.
+
+**Phase 5: DeepSeek Reflections & Enhanced Audio**
+- [x] Create server endpoint to call DeepSeek API with eaten items.
+- [x] Craft prompt for DeepSeek to generate Pooplord's reflective paragraph with poop/bathroom metaphors.
+- [x] Client-side: Track recently eaten items.
+- [x] Client-side: Implement a timer (approx. 1 min) to trigger reflection requests.
+- [x] Client-side: Fetch reflection from server and speak using Web Speech API.
+- [ ] Ensure Web Speech API works reasonably across desktop, iOS, and Android for timed events. (Requires testing)
+
 ### Later / Optional
 *   Consider leaderboard alternatives if desired.
 *   Advanced item behaviors (e.g., fleeing, chasing).

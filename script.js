@@ -18,6 +18,17 @@ let characterSize = 2; // Character size multiplier (starts at 2rem)
 let directionsService;
 let directionsRenderer;
 
+// New variables for AI Pooplords
+let peopleExplodedCount = 0;
+const aiPooplords = [];
+const AI_POOPLORD_SPAWN_THRESHOLD = 5;
+const AI_POOPLORD_SPEED = 2; // Meters per update, adjust as needed
+const AI_POOPLORD_TARGET_RADIUS = 5; // Radius within which AI considers target reached (meters)
+
+// Variables for DeepSeek Reflections
+let recentlyEatenItems = [];
+const REFLECTION_INTERVAL = 60000; // 60 seconds
+
 const itemSpawnInterval = 2000; // Spawn new item every 2 seconds
 const itemMovementInterval = 50; // Update item positions every 50ms for smoother animation
 const ITEM_WANDER_SPEED = 0.75; // Meters per movement interval (e.g., 0.75m every 50ms = 15 m/s)
@@ -130,11 +141,18 @@ function handleItemCollision(item, index) {
     playRandomFartSound(); // Play a fart sound on any collision
 
     updateScore(item.type.points);
+    recentlyEatenItems.push(item.type.emoji); // Add emoji to recently eaten list
 
     if (item.type.type === 'person') {
         updateCharacterSize(item.type.sizeIncrease);
         character.classList.add('eating'); // or a new class like 'growing'
         setTimeout(() => character.classList.remove('eating'), 300);
+        
+        peopleExplodedCount++;
+        if (peopleExplodedCount % AI_POOPLORD_SPAWN_THRESHOLD === 0) {
+            spawnAIPooplord();
+        }
+
     } else if (item.type.type === 'food') {
         // Food no longer changes size
         character.classList.add('eating');
@@ -468,131 +486,99 @@ function startItemMovement() {
 }
 
 function initializeCharacterPosition() {
-    // Initial position based on CSS (centered)
-    characterX = character.offsetLeft;
-    characterY = character.offsetTop;
-    console.log(`Character initial position: x=${characterX}, y=${characterY}`);
-}
+    // Center character on screen
+    // This doesn't move the DOM element anymore, but good for initial logical setup if needed
+    characterX = gameContainer.offsetWidth / 2;
+    characterY = gameContainer.offsetHeight / 2;
 
-document.addEventListener('keydown', (event) => {
-    if (!hasUserInteracted && backgroundMusic && backgroundMusic.paused) {
-        backgroundMusic.play().catch(error => console.error("Error starting background music on keydown:", error));
-        hasUserInteracted = true;
-    }
+    // Add event listeners for desktop
+    document.addEventListener('keydown', (event) => {
+        if (!map) return;
+        let panX = 0;
+        let panY = 0;
+        switch (event.key) {
+            case 'ArrowUp':
+            case 'w':
+                panY = -characterSpeed;
+                character.classList.add('moving');
+                break;
+            case 'ArrowDown':
+            case 's':
+                panY = characterSpeed;
+                character.classList.add('moving');
+                break;
+            case 'ArrowLeft':
+            case 'a':
+                panX = -characterSpeed;
+                character.classList.add('moving');
+                break;
+            case 'ArrowRight':
+            case 'd':
+                panX = characterSpeed;
+                character.classList.add('moving');
+                break;
+        }
+        if (panX !== 0 || panY !== 0) {
+            map.panBy(panX, panY);
+        }
+    });
 
-    const key = event.key.toLowerCase();
-    let isMoving = false;
-    let panX = 0;
-    let panY = 0;
+    document.addEventListener('keyup', (event) => {
+        // Remove moving class when key is released (optional, for visual feedback)
+        if (['ArrowUp', 'w', 'ArrowDown', 's', 'ArrowLeft', 'a', 'ArrowRight', 'd'].includes(event.key)) {
+            character.classList.remove('moving');
+        }
+    });
 
-    if (key === 'arrowup' || key === 'w') {
-        panY = -characterSpeed;
-        isMoving = true;
-    } else if (key === 'arrowdown' || key === 's') {
-        panY = characterSpeed;
-        isMoving = true;
-    } else if (key === 'arrowleft' || key === 'a') {
-        panX = -characterSpeed;
-        isMoving = true;
-    } else if (key === 'arrowright' || key === 'd') {
-        panX = characterSpeed;
-        isMoving = true;
-    }
+    // Add event listeners for mobile (touch)
+    let touchStartX, touchStartY;
+    let isDragging = false;
 
-    if (map && (panX !== 0 || panY !== 0)) {
-        map.panBy(panX, panY);
-    }
+    character.addEventListener('touchstart', (event) => {
+        if (!map) return;
+        isDragging = true;
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+        character.style.cursor = 'grabbing';
+        character.classList.add('moving'); // Add moving class on touch start
+        event.preventDefault(); // Prevent page scrolling
+    }, { passive: false });
 
-    // Only add animation if actually moving
-    if (isMoving) {
-        character.classList.add('moving');
-    }
-});
+    document.addEventListener('touchmove', (event) => {
+        if (!isDragging || !map) return;
+        const touchX = event.touches[0].clientX;
+        const touchY = event.touches[0].clientY;
+        
+        const deltaX = touchX - touchStartX;
+        const deltaY = touchY - touchStartY;
 
-document.addEventListener('keyup', (event) => {
-    // Remove moving animation when key is released
-    character.classList.remove('moving');
-});
+        // Pan the map inversely to the drag direction
+        map.panBy(-deltaX * 0.2, -deltaY * 0.2); // Adjust multiplier for sensitivity
+        
+        touchStartX = touchX;
+        touchStartY = touchY;
+        event.preventDefault(); // Prevent page scrolling
+    }, { passive: false });
 
-// Call initMap or a similar function if Google Maps API is not yet integrated
-// For now, we can call initializeCharacterPosition directly if map isn't ready
-if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
-    // This will run if Google Maps API is not loaded yet
-    // We need to ensure the DOM is ready before getting offsetLeft/Top
-    document.addEventListener('DOMContentLoaded', () => {
-        initializeCharacterPosition();
+    document.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        character.style.cursor = 'grab';
+        character.classList.remove('moving'); // Remove moving class on touch end
     });
 }
 
-// Touch controls for mobile devices
-let isDragging = false;
-let touchStartX = 0;
-let touchStartY = 0;
-
-character.addEventListener('touchstart', (event) => {
-    if (!hasUserInteracted && backgroundMusic && backgroundMusic.paused) {
-        backgroundMusic.play().catch(error => console.error("Error starting background music on touchstart:", error));
-        hasUserInteracted = true;
-    }
-
-    isDragging = true;
-    const touch = event.touches[0];
-    touchStartX = touch.clientX;
-    touchStartY = touch.clientY;
-    
-    // Change cursor style
-    character.style.cursor = 'grabbing';
-    character.classList.add('moving'); // Add moving animation
-    
-    // Prevent default to avoid scrolling the page
-    event.preventDefault();
-});
-
-document.addEventListener('touchmove', (event) => {
-    if (!isDragging || !map) return;
-    
-    const touch = event.touches[0];
-    const deltaX = touch.clientX - touchStartX;
-    const deltaY = touch.clientY - touchStartY;
-
-    // Pan the map in the opposite direction of the drag
-    map.panBy(-deltaX / 2, -deltaY / 2); // Divide by 2 for less sensitive panning
-
-    // Update start points for next move event
-    touchStartX = touch.clientX;
-    touchStartY = touch.clientY;
-    
-    // Prevent default to avoid scrolling the page
-    event.preventDefault();
-});
-
-document.addEventListener('touchend', () => {
-    if (isDragging) {
-        isDragging = false;
-        character.style.cursor = 'grab';
-        character.classList.remove('moving');
-    }
-});
-
-document.addEventListener('touchcancel', () => {
-    if (isDragging) {
-        isDragging = false;
-        character.style.cursor = 'grab';
-        character.classList.remove('moving');
-    }
-});
-
-// Initialize items when the map is ready
+// Initialize items
 function initializeItems() {
-    // Spawn an initial set of items
-    for (let i = 0; i < 15; i++) { // Start with 15 items
-        createItem(); // No need to pass isFood anymore
+    // Spawn initial items
+    for (let i = 0; i < 10; i++) { // Start with 10 items
+        createItem();
     }
-    
-    // Start spawning and movement
-    startItemSpawning();
-    startItemMovement();
-    startCollisionDetection();
+    startItemSpawning(); // Start continuous spawning
+    startItemMovement(); // Start item movement
+    startCollisionDetection(); // Start collision detection with player
+    setInterval(updateAIPooplords, 200); // Update AI pooplords every 200ms
+    startReflectionTimer(); // Start the timer for Pooplord's reflections
 }
 
 // Leaderboard functionality removed
@@ -688,4 +674,175 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialization that depends on DOM elements can go here
     // For example, attaching event listeners to buttons if not already done globally
     // The Google Maps API script will call window.initMap itself once it's loaded.
-}); 
+});
+
+// Function to spawn an AI Pooplord
+function spawnAIPooplord() {
+    console.log("Spawning an AI Pooplord!");
+    const spawnPosition = map.getCenter(); // Spawn near player for now
+
+    const aiMarker = new google.maps.Marker({
+        position: spawnPosition,
+        map: map,
+        label: {
+            text: '💩', // Poop emoji
+            fontSize: '1.8rem', // Slightly smaller than player if desired
+            className: 'map-emoji-label ai-pooplord-label' // For potential distinct styling
+        },
+        icon: { // Transparent icon to hide default pin
+            url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+            scaledSize: new google.maps.Size(1, 1),
+            anchor: new google.maps.Point(0, 0),
+        },
+        zIndex: 9 // Below player character (z-index 10)
+    });
+
+    const newAIPooplord = {
+        id: `ai-${aiPooplords.length}-${Date.now()}`,
+        marker: aiMarker,
+        target: null, // Will be assigned shortly
+        state: 'seeking' // states: seeking, attacking
+    };
+
+    findTargetForAIPooplord(newAIPooplord);
+    aiPooplords.push(newAIPooplord);
+    console.log("New AI pooplord created:", newAIPooplord);
+}
+
+function findTargetForAIPooplord(aiLord) {
+    let closestPerson = null;
+    let minDistance = Infinity;
+
+    for (const item of allItemsOnMap) {
+        if (item.type.type === 'person') {
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                aiLord.marker.getPosition(),
+                item.latLng
+            );
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestPerson = item;
+            }
+        }
+    }
+    aiLord.target = closestPerson;
+    if (closestPerson) {
+        console.log(`AI Pooplord ${aiLord.id} targeting ${closestPerson.type.name} at ${closestPerson.latLng.toString()}`);
+    } else {
+        console.log(`AI Pooplord ${aiLord.id} found no person targets.`);
+        aiLord.state = 'idle'; // Or some other state if no targets
+    }
+}
+
+function updateAIPooplords() {
+    if (!map || aiPooplords.length === 0) return;
+
+    for (let i = aiPooplords.length - 1; i >= 0; i--) {
+        const aiLord = aiPooplords[i];
+
+        if (!aiLord.marker || !aiLord.marker.getMap()) { // Check if marker exists and is on map
+            aiPooplords.splice(i, 1); // Remove if marker is gone (e.g. due to external cleanup)
+            console.log(`Cleaned up AI Pooplord ${aiLord.id} as its marker is gone.`);
+            continue;
+        }
+
+        if (aiLord.state === 'seeking' && !aiLord.target) {
+            findTargetForAIPooplord(aiLord);
+        }
+
+        if (aiLord.target && aiLord.target.marker && aiLord.target.marker.getMap()) {
+            const aiPosition = aiLord.marker.getPosition();
+            const targetPosition = aiLord.target.latLng;
+
+            const distanceToTarget = google.maps.geometry.spherical.computeDistanceBetween(aiPosition, targetPosition);
+
+            if (distanceToTarget < AI_POOPLORD_TARGET_RADIUS) {
+                // Reached target - "explode" person
+                console.log(`AI Pooplord ${aiLord.id} reached target ${aiLord.target.type.name}`);
+                
+                // Find the item in allItemsOnMap to remove it properly
+                const targetIndex = allItemsOnMap.findIndex(item => item.id === aiLord.target.id);
+                if (targetIndex !== -1) {
+                    createBrownExplosion(aiLord.target.marker.getPosition());
+                    playRandomFartSound(); // AI poops also make noise
+                    updateScore(aiLord.target.type.points); // Add points to player's score
+
+                    aiLord.target.marker.setMap(null); // Remove person marker
+                    allItemsOnMap.splice(targetIndex, 1);
+                    console.log(`AI Pooplord ${aiLord.id} exploded ${aiLord.target.type.name}. Remaining items: ${allItemsOnMap.length}`);
+
+                    // Spawn a new random item to replace the one consumed by AI
+                     setTimeout(() => {
+                        createItem();
+                    }, Math.random() * 1000 + 500);
+
+                } else {
+                    console.warn(`AI Pooplord ${aiLord.id} target ${aiLord.target.id} not found in allItemsOnMap.`);
+                }
+                
+                aiLord.target = null; // Reset target
+                aiLord.state = 'seeking'; // Look for new target
+                findTargetForAIPooplord(aiLord); // Immediately find new target
+            } else {
+                // Move towards target
+                const heading = google.maps.geometry.spherical.computeHeading(aiPosition, targetPosition);
+                const newPosition = google.maps.geometry.spherical.computeOffset(aiPosition, AI_POOPLORD_SPEED, heading);
+                aiLord.marker.setPosition(newPosition);
+            }
+        } else if (aiLord.target && (!aiLord.target.marker || !aiLord.target.marker.getMap())) {
+            // Target was removed by player or another AI, find new target
+            console.log(`AI Pooplord ${aiLord.id}'s target was removed. Finding new target.`);
+            aiLord.target = null;
+            aiLord.state = 'seeking';
+            findTargetForAIPooplord(aiLord);
+        } else if (!aiLord.target && aiLord.state !== 'idle') {
+            // No target, try to find one
+            findTargetForAIPooplord(aiLord);
+        }
+    }
+}
+
+// --- DeepSeek Reflection Logic ---
+function startReflectionTimer() {
+    setInterval(requestPooplordReflection, REFLECTION_INTERVAL);
+}
+
+async function requestPooplordReflection() {
+    if (!areSfxOn) return; // Don't request if sound effects (and thus speech) are off
+    if (recentlyEatenItems.length === 0) {
+        console.log("Pooplord has eaten nothing recently. No reflection needed.");
+        return;
+    }
+
+    console.log("Requesting Pooplord reflection for items:", recentlyEatenItems);
+
+    try {
+        const response = await fetch('/get-pooplord-reflection', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ eatenItems: [...recentlyEatenItems] }) // Send a copy
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Error fetching reflection:", response.status, errorData.error, errorData.details);
+            // Potentially speak an error message or handle differently
+            // speakText("My bowels are blocked... I can't reflect right now."); 
+            return;
+        }
+
+        const data = await response.json();
+        if (data.reflection) {
+            console.log("Pooplord reflects:", data.reflection);
+            speakText(data.reflection);
+            recentlyEatenItems = []; // Clear the list after successful reflection
+        } else {
+            console.error("No reflection content in response:", data);
+        }
+    } catch (error) {
+        console.error("Failed to request Pooplord reflection:", error);
+        // speakText("My digestive tract is in turmoil! No thoughts now...");
+    }
+} 

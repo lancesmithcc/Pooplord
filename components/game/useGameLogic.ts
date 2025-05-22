@@ -71,7 +71,7 @@ const ITEM_UPDATE_INTERVAL = 50;
 export const useGameLogic = () => {
   const [gameState, setGameStateInternal] = useState<GameState>(initialGameState);
   const gameStateRef = useRef<GameState>(gameState);
-  const activeTimeouts = useRef<Array<number>>([]);
+  const activeTimeouts = useRef<any[]>([]);
 
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
   useEffect(() => {
@@ -248,11 +248,11 @@ export const useGameLogic = () => {
         collisionOccurred = true; scoreDelta += item.points; sizeDelta += item.sizeChange; speedDelta += item.speedChange;
         itemsToUpdate.push({ ...item, status: 'disappearing' });
         const timeoutId = setTimeout(() => {
-          setGameState((prev: GameState) => ({
+          setGameState((prev: GameState) => ({ 
             ...prev,
-            items: prev.items.filter((i: GameItemType) => i.id !== item.id)
+            items: prev.items.filter((i: GameItemType) => i.id !== item.id) 
           }));
-          activeTimeouts.current = activeTimeouts.current.filter((id: number) => id !== timeoutId);
+          activeTimeouts.current = activeTimeouts.current.filter(id => id !== timeoutId);
         }, ITEM_ANIMATION_DURATION);
         activeTimeouts.current.push(timeoutId);
       } else {

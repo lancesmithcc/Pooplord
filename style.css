@@ -189,4 +189,33 @@ html, body {
     font-weight: bold; 
 }
 
-/* We'll add more styles for items, map, score, etc. later */ 
+/* We'll add more styles for items, map, score, etc. later */
+
+.map-emoji-label {
+    /* Base styles for map emoji labels if any additional are needed */
+    /* font-size is set in JS via marker label options */
+    /* color might also be set in JS if varied */
+    text-shadow: 
+        -1px -1px 0 #fff,
+         1px -1px 0 #fff,
+        -1px  1px 0 #fff,
+         1px  1px 0 #fff; /* White outline for better visibility */
+}
+
+.explosion-animation {
+    animation: explode 0.7s ease-out forwards;
+}
+
+@keyframes explode {
+    0% {
+        opacity: 1;
+        transform: scale(0.5);
+    }
+    50% {
+        transform: scale(1.5);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(2.5);
+    }
+} 

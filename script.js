@@ -15,7 +15,6 @@ const characterSpeed = 10; // Pixels per move - this will now be a map pan amoun
 let map; // Google Map instance
 let score = 0; // Player's score
 let characterSize = 2; // Character size multiplier (starts at 2rem)
-let characterStrength = 10; // Character's strength
 let directionsService;
 let directionsRenderer;
 
@@ -48,21 +47,20 @@ function updateScore(points) {
     const pointsDisplay = document.createElement('div');
     pointsDisplay.className = 'points-popup';
     pointsDisplay.textContent = points > 0 ? `+${points}` : points;
-    pointsDisplay.style.position = 'absolute';
-    pointsDisplay.style.left = `${characterX}px`;
-    pointsDisplay.style.top = `${characterY - 30}px`;
     pointsDisplay.style.color = points > 0 ? 'green' : 'red';
     pointsDisplay.style.fontWeight = 'bold';
-    pointsDisplay.style.zIndex = '25';
-    gameContainer.appendChild(pointsDisplay);
     
+    // Append to score display area in the HUD
+    const scoreContainer = document.getElementById('score-display'); // Assuming score-display is the container
+    scoreContainer.appendChild(pointsDisplay);
+
     // Animate and remove the points display
     setTimeout(() => {
         pointsDisplay.style.transition = 'opacity 1s, transform 1s';
         pointsDisplay.style.opacity = '0';
         pointsDisplay.style.transform = 'translateY(-20px)';
         setTimeout(() => {
-            gameContainer.removeChild(pointsDisplay);
+            scoreContainer.removeChild(pointsDisplay);
         }, 1000);
     }, 10);
 }
@@ -71,13 +69,9 @@ function updateScore(points) {
 function updateCharacterSize(change) {
     characterSize += change;
     // Ensure minimum size
-    if (characterSize < 1) characterSize = 1;
+    if (characterSize < 0.5) characterSize = 0.5; // Minimum size an eighth of original
+    if (characterSize > 10) characterSize = 10; // Maximum size ten times original
     character.style.fontSize = `${characterSize}rem`;
-}
-
-// Change character speed
-function updateCharacterSpeed(change) {
-    // characterSpeed is defined above, adjust as needed
 }
 
 // Check for collision between character (map center) and an item (marker)
@@ -97,15 +91,22 @@ function checkCollision() {
 
 // Handle collision with an item
 function handleItemCollision(item, index) {
-    // Effects (score, size) are the same
-    if (item.isFood) {
-        updateScore(item.type.points);
+    createBrownExplosion(item.marker.getPosition()); // Create brown explosion at item's location
+
+    updateScore(item.type.points);
+
+    if (item.type.type === 'person') {
         updateCharacterSize(item.type.sizeIncrease);
+        character.classList.add('eating'); // or a new class like 'growing'
+        setTimeout(() => character.classList.remove('eating'), 300);
+    } else if (item.type.type === 'food') {
+        // Food no longer changes size
         character.classList.add('eating');
         setTimeout(() => character.classList.remove('eating'), 300);
-    } else {
-        updateScore(item.type.points);
-        updateCharacterSize(-item.type.sizeDecrease);
+    } else if (item.type.type === 'non-edible') {
+        if (item.type.emoji === '💣') { // Only bombs decrease size
+            updateCharacterSize(-item.type.sizeDecrease);
+        }
         character.classList.add('hurt');
         setTimeout(() => character.classList.remove('hurt'), 300);
     }
@@ -116,7 +117,7 @@ function handleItemCollision(item, index) {
 
     // Spawn a new item (marker)
     setTimeout(() => {
-        createItem(Math.random() < 0.7);
+        createItem(); // No need to pass isFood anymore
     }, Math.random() * 1000 + 500);
 }
 
@@ -364,136 +365,125 @@ window.initMap = function() {
     }
 }
 
-// Game items configuration
+// Define item types
 const foodItems = [
-    { emoji: '🍎', name: 'Apple', points: 10, sizeIncrease: 0.1, speedIncrease: 0.5 },
-    { emoji: '🍌', name: 'Banana', points: 15, sizeIncrease: 0.15, speedIncrease: 0.7 },
-    { emoji: '🍕', name: 'Pizza', points: 25, sizeIncrease: 0.2, speedIncrease: 0.3 },
-    { emoji: '🍔', name: 'Burger', points: 30, sizeIncrease: 0.25, speedIncrease: 0.2 },
-    { emoji: '🍦', name: 'Ice Cream', points: 20, sizeIncrease: 0.15, speedIncrease: 0.5 },
-    { emoji: '🍩', name: 'Donut', points: 15, sizeIncrease: 0.2, speedIncrease: 0.4 }
+    { emoji: '🍎', points: 10, type: 'food' },
+    { emoji: '🍕', points: 15, type: 'food' },
+    { emoji: '🍩', points: 20, type: 'food' },
+    { emoji: '🌮', points: 12, type: 'food' },
+    { emoji: '🍦', points: 18, type: 'food' }
 ];
 
 const nonEdibleItems = [
-    { emoji: '💉', name: 'Needle', points: -20, sizeDecrease: 0.15, speedDecrease: 0.6 },
-    { emoji: '💊', name: 'Pill', points: -15, sizeDecrease: 0.1, speedDecrease: 0.4 },
-    { emoji: '🚬', name: 'Cigarette', points: -10, sizeDecrease: 0.05, speedDecrease: 0.3 },
-    { emoji: '💣', name: 'Bomb', points: -30, sizeDecrease: 0.25, speedDecrease: 0.7 }
+    { emoji: '💉', points: -10, type: 'non-edible' },
+    { emoji: '💊', points: -5, type: 'non-edible' },
+    { emoji: '🚬', points: -10, type: 'non-edible' },
+    { emoji: '💣', points: -50, type: 'non-edible', sizeDecrease: 0.5 } // Only bomb decreases size
 ];
 
-const allItemsOnMap = []; // Track all items currently on the map
-const maxItems = 15; // Maximum number of items on the map at once
-const itemSpawnInterval = 2000; // New item every 2 seconds (if below maxItems)
-const itemMovementInterval = 50; // Update item positions every 50ms - will be used differently now
-const collisionCheckInterval = 100; // How often to check for collisions
-const itemSpawnRadius = 500; // Meters from map center to spawn items
-const collisionRadius = 20; // Meters from character (map center) to trigger collision
+const peopleEmojis = [
+    '🚶', '🚶‍♂️', '🚶‍♀️', '🚶‍➡️', '🚶‍♀️‍➡️', '🚶‍♂️‍➡️',
+    '🧍', '🧍‍♂️', '🧍‍♀️',
+    '🧎', '🧎‍♂️', '🧎‍♀️', '🧎‍➡️', '🧎‍♀️‍➡️', '🧎‍♂️‍➡️',
+    '🧑‍🦯', '🧑‍🦯‍➡️', '👨‍🦯', '👨‍🦯‍➡️', '👩‍🦯', '👩‍🦯‍➡️',
+    '🧑‍🦼', '🧑‍🦼‍➡️', '👨‍🦼', '👨‍🦼‍➡️', '👩‍🦼', '👩‍🦼‍➡️'
+];
 
-// Define item types with their properties
-const itemTypes = {
-    food: [
-        { emoji: '🍎', points: 10, sizeIncrease: 0.2, effect: 'grow' },
-        { emoji: '🍌', points: 15, sizeIncrease: 0.3, effect: 'grow' },
-        { emoji: '🍔', points: 20, sizeIncrease: 0.4, effect: 'grow' },
-        { emoji: '🍕', points: 25, sizeIncrease: 0.5, effect: 'grow' },
-        { emoji: '🍩', points: 30, sizeIncrease: 0.6, effect: 'grow' }
-    ],
-    nonEdible: [
-        { emoji: '💉', points: -10, sizeDecrease: 0.2, effect: 'shrink' },
-        { emoji: '💊', points: -15, sizeDecrease: 0.3, effect: 'shrink' },
-        { emoji: '💣', points: -20, sizeDecrease: 0.4, effect: 'shrink' },
-        { emoji: '💥', points: -25, sizeDecrease: 0.5, effect: 'shrink' },
-        { emoji: '☠️', points: -30, sizeDecrease: 0.6, effect: 'shrink' }
-    ]
-};
+const peopleItemTypes = peopleEmojis.map(emoji => ({
+    emoji: emoji,
+    points: 25,
+    type: 'person',
+    sizeIncrease: 0.25 // People increase size
+}));
 
-// Create and place a new item (marker) on the map
-function createItem(isFood = true) {
-    if (!map || !directionsService) return;
+const allItemTypes = [...foodItems, ...nonEdibleItems, ...peopleItemTypes];
+let allItemsOnMap = []; // Array to store active item markers
+const collisionRadius = 20; // meters for collision detection with markers
 
-    const itemTypeArray = isFood ? itemTypes.food : itemTypes.nonEdible;
-    const randomType = itemTypeArray[Math.floor(Math.random() * itemTypeArray.length)];
-
-    // Spawn items within a certain radius of the map center (player)
-    const center = map.getCenter();
-    const spawnRadius = 1000; // meters from center
-
-    // Attempt to find a random point on a road
-    const randomBearing = Math.random() * 360;
-    const randomDist = Math.random() * spawnRadius;
-    const originPoint = google.maps.geometry.spherical.computeOffset(center, randomDist, randomBearing);
-
-    // For destination, pick another random point, somewhat further away
-    const destBearing = Math.random() * 360;
-    const destDist = (Math.random() * 500) + 500; // 500-1000m away
-    const destinationPoint = google.maps.geometry.spherical.computeOffset(originPoint, destDist, destBearing);
-    
-    const request = {
-        origin: originPoint,
-        destination: destinationPoint,
-        travelMode: google.maps.TravelMode.DRIVING
-    };
-
-    directionsService.route(request, function(result, status) {
-        if (status == google.maps.DirectionsStatus.OK) {
-            const route = result.routes[0];
-            if (!route || !route.overview_path || route.overview_path.length === 0) {
-                console.warn("Could not find a route or route is empty for item, spawning at random point.");
-                // Fallback: spawn at originPoint without a route
-                spawnMarkerAtPoint(randomType, isFood, originPoint, null);
-                return;
-            }
-
-            // Spawn marker at the start of the route
-            const startLatLng = route.overview_path[0];
-            spawnMarkerAtPoint(randomType, isFood, startLatLng, route);
-
-        } else {
-            console.error('Directions request failed due to ' + status + '. Spawning item at random point.');
-            // Fallback: spawn at originPoint without a route if directions fail
-            spawnMarkerAtPoint(randomType, isFood, originPoint, null);
-        }
+// Create a "brown explosion" animation at a given LatLng
+function createBrownExplosion(position) {
+    const explosionEmoji = '💨'; // Or another suitable emoji like '💥' or a brown circle unicode
+    const explosionMarker = new google.maps.Marker({
+        position: position,
+        map: map,
+        label: {
+            text: explosionEmoji,
+            fontSize: '2rem', // Initial size
+            className: 'map-emoji-label explosion-animation' // For CSS animation
+        },
+        icon: {
+            url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', // Tiny transparent PNG
+            scaledSize: new google.maps.Size(1, 1)
+        },
+        zIndex: 100 // Ensure it's above other items briefly
     });
+
+    // CSS will handle the animation: expand, fade out
+    // Remove the marker after animation (e.g., 1 second)
+    setTimeout(() => {
+        explosionMarker.setMap(null);
+    }, 1000); // Duration of explosion visibility
 }
 
-function spawnMarkerAtPoint(itemTypeDetails, isFood, positionLatLng, route) {
+// Define items
+const itemSpawnRadius = 500; // Spawn items within 500 meters of map center
+
+// Create and display items on the map as markers
+function createItem() {
+    if (!map) return;
+
+    const mapCenter = map.getCenter();
+    const randomAngle = Math.random() * 2 * Math.PI;
+    const randomRadius = Math.random() * itemSpawnRadius; // meters
+
+    // Calculate a random LatLng position within the radius
+    const positionLatLng = google.maps.geometry.spherical.computeOffset(mapCenter, randomRadius, randomAngle * (180 / Math.PI));
+
+    // Randomly select an item type from all available types
+    const itemTypeDetails = allItemTypes[Math.floor(Math.random() * allItemTypes.length)];
+
+    // Default: no specific route, item will just float or appear
+    spawnMarkerAtPoint(itemTypeDetails, positionLatLng);
+}
+
+// Function to spawn a marker at a specific point (potentially with a route)
+function spawnMarkerAtPoint(itemTypeDetails, positionLatLng, route = null) {
+    const itemEmoji = itemTypeDetails.emoji;
+    const markerLabel = {
+        text: itemEmoji,
+        fontSize: '2rem', // Make emoji larger
+        className: 'map-emoji-label' // Add class for potential styling
+    };
+
     const marker = new google.maps.Marker({
         position: positionLatLng,
         map: map,
-        label: {
-            text: itemTypeDetails.emoji,
-            fontSize: '24px', // Make emoji larger
-            color: 'black' // Ensure visibility against various backgrounds
+        label: markerLabel,
+        icon: {
+            url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', // Tiny transparent PNG
+            scaledSize: new google.maps.Size(1, 1) // Makes the default icon invisible
         },
-        icon: { // Hide default pin
-            url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', // 1x1 transparent PNG
-            scaledSize: new google.maps.Size(1, 1),
-            anchor: new google.maps.Point(0, 0),
-        },
-        // Custom properties
-        isFood: isFood,
-        type: itemTypeDetails,
-        latLng: positionLatLng, // Store LatLng for easier access
-        route: route, // Store the route for this item
-        routeStep: 0, // Current step in the route
-        animationStartTime: performance.now(),
-        animationDuration: route && route.legs && route.legs[0].duration ? route.legs[0].duration.value * 1000 : 5000 // milliseconds, default 5s if no route
+        // animation: google.maps.Animation.DROP, // Optional: drop animation when appearing
+        // draggable: false // Items should not be draggable by user
     });
 
-    allItemsOnMap.push(marker);
-
-    // Add CSS animation for floating effect
-    // This requires a DOM element, which markers are not directly.
-    // We'll achieve visual movement by updating marker position.
-    // The "float" animation will be handled by the moveItems function.
+    const itemObject = {
+        marker: marker,
+        type: itemTypeDetails, // Store the full type details (emoji, points, effects)
+        latLng: positionLatLng, // Store LatLng for distance calculation
+        isFood: itemTypeDetails.type === 'food', // Keep for compatibility if needed, but prefer item.type.type
+        isPerson: itemTypeDetails.type === 'person',
+        isNonEdible: itemTypeDetails.type === 'non-edible'
+    };
 
     if (route) {
-        // If there's a route, movement will be handled by moveItems based on route.overview_path
-        // console.log("Item spawned on route:", marker.type.emoji, marker.latLng.toString());
-    } else {
-        // If no route, maybe a simple fallback movement or stationary
-        // console.log("Item spawned at point (no route):", marker.type.emoji, marker.latLng.toString());
+        itemObject.route = route;
+        itemObject.routeStep = 0;
+        itemObject.animationFrameId = null; // For controlling movement animation
     }
+
+    allItemsOnMap.push(itemObject);
+    console.log(`Spawned ${itemTypeDetails.emoji} at ${positionLatLng.lat()}, ${positionLatLng.lng()}`);
 }
 
 // Start spawning items
@@ -702,9 +692,9 @@ document.addEventListener('touchcancel', () => {
 
 // Initialize items when the map is ready
 function initializeItems() {
-    // Add initial items
-    for (let i = 0; i < 5; i++) {
-        createItem(Math.random() < 0.7); // 70% chance of food
+    // Spawn an initial set of items
+    for (let i = 0; i < 15; i++) { // Start with 15 items
+        createItem(); // No need to pass isFood anymore
     }
     
     // Start spawning and movement

@@ -14,20 +14,25 @@
 - [X] **Items (Food & Non-Edibles):**
     - [X] Create and display food items on the map.
     - [X] Create and display non-edible items on the map.
-    - [X] Implement item movement (walking around).
+    - [ ] Implement item movement (walking around).
     - [X] Implement item respawning.
 - [X] **Interaction (Eating/Collision):**
     - [X] Detect collision between Pooplord and items.
     - [X] Implement logic for eating food items:
-        - [X] Increase character size.
-        - [X] Increase character speed.
-        - [X] Increase character strength.
+        - [X] Increase character size (REMOVED - only people/bombs affect size).
+        - [X] Increase character speed (REMOVED - keeping it simple for now).
+        - [X] Increase character strength (REMOVED - keeping it simple for now).
         - [X] Add points to score.
+        - [X] Add "brown explosion" visual effect.
     - [X] Implement logic for colliding with non-edible items:
-        - [X] Decrease character size.
-        - [X] Decrease character speed.
-        - [X] Decrease character strength.
+        - [X] Decrease character size (MODIFIED - only bombs decrease size).
+        - [X] Decrease character speed (REMOVED - keeping it simple for now).
+        - [X] Decrease character strength (REMOVED - keeping it simple for now).
         - [X] Subtract points from score.
+        - [X] Add "brown explosion" visual effect.
+    - [X] Add "People" items:
+        - [X] Display various people emojis.
+        - [X] On collision: "brown explosion", increase character size, award points.
 - [X] **Scoring:**
     - [X] Display the current score.
 
@@ -56,7 +61,7 @@
     - [X] Create package.json with necessary dependencies
 - [x] Make items appear as map markers (emojis) without default pin, increased emoji size.
 - [x] Load Google Maps `directions` library.
-- [x] Implement item movement along roads using `DirectionsService`.
+- [x] Implement item movement along roads using `DirectionsService`. (DEPRIORITIZED - items will have simpler movement for now)
 - [ ] Refine item spawning to be on or near roads.
 - [ ] Ensure collision detection works with moving items.
 - [ ] Add sound effects for eating, getting hurt, and game events.

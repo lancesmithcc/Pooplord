@@ -1,11 +1,18 @@
 [build]
   # Directory to publish (static site)
-  publish = "./"
+  publish = "." # Serve files from the root directory (since build.js modifies index.html in place)
   # Command to build your site
   command = "npm run build"
+  functions = "netlify/functions"
 
 # Redirect all traffic to index.html for SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
+  status = 200
+
+# Redirect API traffic to functions
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
   status = 200 

@@ -817,7 +817,7 @@ async function requestPooplordReflection() {
     console.log("Requesting Pooplord reflection for items:", recentlyEatenItems);
 
     try {
-        const response = await fetch('/get-pooplord-reflection', {
+        const response = await fetch('/api/get-pooplord-reflection', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

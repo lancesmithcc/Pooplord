@@ -83,6 +83,8 @@
 - [x] Change map to satellite view.
 - [x] Change map to hybrid view (satellite with labels).
 - [x] Update sound toggle buttons to use icons and ensure functionality.
+- [x] Move sound toggle buttons to the bottom of the screen.
+- [x] Add a 50% transparent brown multiply overlay to the map.
 
 ### Later / Optional
 *   Consider leaderboard alternatives if desired.

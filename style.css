@@ -247,11 +247,12 @@ html, body {
 }
 
 #sound-controls {
-    position: absolute;
-    top: 10px; /* Adjust as needed */
-    right: 120px; /* Adjust to place it next to the score */
+    position: fixed; /* Changed from absolute */
+    bottom: 15px; /* Position from bottom */
+    right: 15px; /* Position from right */
     display: flex;
     gap: 10px;
+    z-index: 30; /* Ensure it's above map overlay and other elements */
 }
 
 #sound-controls button {
@@ -267,4 +268,16 @@ html, body {
 
 #sound-controls button:hover {
     background-color: rgba(60, 60, 60, 0.9);
+}
+
+#map-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(139, 69, 19, 0.5); /* 50% transparent brown (saddlebrown) */
+    mix-blend-mode: multiply;
+    pointer-events: none; /* Allows interaction with the map underneath */
+    z-index: 1; /* Make sure it's above the map but below other UI elements if any */
 } 

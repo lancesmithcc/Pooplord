@@ -18,6 +18,9 @@ let characterSize = 2; // Character size multiplier (starts at 2rem)
 let directionsService;
 let directionsRenderer;
 
+const itemSpawnInterval = 2000; // Spawn new item every 2 seconds
+const itemMovementInterval = 50; // Update item positions every 50ms for smoother animation
+
 // Get score display element from the DOM
 const scoreDisplay = document.getElementById('score-display');
 // const gameInfo = document.getElementById('game-info'); // game-info is no longer used in JS
@@ -117,7 +120,7 @@ function handleItemCollision(item, index) {
 
     // Spawn a new item (marker)
     setTimeout(() => {
-        createItem(); // No need to pass isFood anymore
+        createItem();
     }, Math.random() * 1000 + 500);
 }
 
@@ -489,52 +492,42 @@ function spawnMarkerAtPoint(itemTypeDetails, positionLatLng, route = null) {
 // Start spawning items
 function startItemSpawning() {
     setInterval(() => {
-        // 70% chance of spawning food, 30% chance of spawning non-edible
-        const spawnFood = Math.random() < 0.7;
-        createItem(spawnFood);
+        // createItem no longer takes an argument for type, it picks randomly
+        createItem(); 
     }, itemSpawnInterval);
 }
 
-// Move all items on the map - FOR NOW, ITEMS ARE STATIONARY MARKERS
+// Move all items on the map
 function moveItems() {
     if (!map) return;
     const now = performance.now();
 
     for (let i = allItemsOnMap.length - 1; i >= 0; i--) {
-        const itemMarker = allItemsOnMap[i];
+        const item = allItemsOnMap[i]; // This is our itemObject
 
-        if (itemMarker.route && itemMarker.route.overview_path && itemMarker.route.overview_path.length > 0) {
-            const route = itemMarker.route;
+        if (item.route && item.route.overview_path && item.route.overview_path.length > 0) {
+            // This is the road-following logic, which is currently de-prioritized but kept for potential future use.
+            // For it to work correctly, item.animationStartTime and item.animationDuration need to be set when route is assigned.
+            const route = item.route;
             const path = route.overview_path;
             
-            // Calculate how far along the path the item should be
-            // This is a simple linear interpolation along the path segments.
-            // A more robust approach would consider time and speed for each segment.
-            
-            let elapsedTime = now - itemMarker.animationStartTime;
-            if (elapsedTime >= itemMarker.animationDuration) {
-                elapsedTime = itemMarker.animationDuration; // Cap at duration
+            let elapsedTime = now - (item.animationStartTime || now); // Ensure animationStartTime is initialized
+            const duration = item.animationDuration || 5000; // Default duration if not set
+
+            if (elapsedTime >= duration) {
+                elapsedTime = duration; 
             }
             
-            const progress = elapsedTime / itemMarker.animationDuration; // 0 to 1
+            const progress = elapsedTime / duration; 
 
-            if (progress >= 1) { // Reached end of its current path segment or full path
-                // For now, let's make it stationary or despawn/respawn
-                // If we want continuous movement, we'd need to request a new route here or make it loop.
-                // For simplicity, we'll just keep it at the end of its short path for now.
+            if (progress >= 1) {
                  if (path.length > 0) {
-                    itemMarker.setPosition(path[path.length - 1]);
-                    itemMarker.latLng = path[path.length - 1];
+                    item.marker.setPosition(path[path.length - 1]);
+                    item.latLng = path[path.length - 1];
                  }
-                // Or, remove and respawn:
-                // itemMarker.setMap(null);
-                // allItemsOnMap.splice(i, 1);
-                // createItem(itemMarker.isFood);
                 continue; 
             }
 
-            // Find the current position on the polyline
-            // This is a simplified interpolation. Google's geometry library might have better tools.
             const totalPathDistance = google.maps.geometry.spherical.computeLength(path);
             const distanceToTravel = totalPathDistance * progress;
             
@@ -553,29 +546,31 @@ function moveItems() {
                     break;
                 }
                 currentCumulativeDistance += segmentDistance;
-                if (j === path.length - 2) { // If we are at the last segment
-                     targetPosition = path[path.length -1]; // Go to the end
+                if (j === path.length - 2) { 
+                     targetPosition = path[path.length -1]; 
                 }
             }
             
             if(targetPosition) {
-                itemMarker.setPosition(targetPosition);
-                itemMarker.latLng = targetPosition; // Update stored LatLng
+                item.marker.setPosition(targetPosition);
+                item.latLng = targetPosition; // Update stored LatLng in our itemObject
             }
 
         } else {
-            // Fallback for items without a route (e.g., random float or stationary)
-            // Simple floating animation (vertical bobbing)
+            // Fallback: Simple floating animation (vertical bobbing)
             const floatAmplitude = 0.00001; // Small change in latitude for bobbing
-            const floatSpeed = 0.002; // Adjust for desired speed
-            const newLat = itemMarker.get('originalLat') || itemMarker.getPosition().lat();
-            if(!itemMarker.get('originalLat')) itemMarker.set('originalLat', newLat);
+            const floatSpeed = 0.002; 
+            
+            // Initialize originalLat on the itemObject if not present
+            if (typeof item.originalLat === 'undefined') {
+                item.originalLat = item.marker.getPosition().lat();
+            }
 
-            itemMarker.setPosition(new google.maps.LatLng(
-                newLat + Math.sin(now * floatSpeed) * floatAmplitude,
-                itemMarker.getPosition().lng()
-            ));
-            itemMarker.latLng = itemMarker.getPosition();
+            const newLat = item.originalLat + Math.sin(now * floatSpeed) * floatAmplitude;
+            const newPosition = new google.maps.LatLng(newLat, item.marker.getPosition().lng());
+            
+            item.marker.setPosition(newPosition);
+            item.latLng = newPosition; // Update stored LatLng in our itemObject
         }
     }
 }

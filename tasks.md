@@ -101,6 +101,7 @@
 - [x] Client-side: Implement a timer (approx. 1 min) to trigger reflection requests.
 - [x] Client-side: Fetch reflection from server and speak using Web Speech API.
 - [ ] Ensure Web Speech API works reasonably across desktop, iOS, and Android for timed events. (Requires testing)
+  - [ ] Attempt to prime/unlock Web Speech API on iOS via initial user interaction with SFX toggle.
 
 **Mushroom Item & Cosmic Reflections:**
 - [x] Define mushroom item (🍄) with high point value (e.g., 100x standard).

@@ -666,6 +666,21 @@ if (sfxToggleButton) {
         if (!areSfxOn && 'speechSynthesis' in window) {
             window.speechSynthesis.cancel();
         }
+        
+        // Attempt to prime speech synthesis on iOS when SFX are first enabled by user
+        if (areSfxOn && !hasUserInteracted && 'speechSynthesis' in window) {
+            console.log("Attempting to prime Speech Synthesis for iOS...");
+            // Create a very short, silent utterance
+            const primingUtterance = new SpeechSynthesisUtterance(' '); // A single space or empty string
+            primingUtterance.volume = 0; // Make it silent
+            primingUtterance.rate = 10; // Speak it fast
+            primingUtterance.pitch = 0.1; // Low pitch
+            
+            window.speechSynthesis.speak(primingUtterance);
+            // Note: This might still require a brief sound to actually unlock audio context on some iOS versions.
+            // We are also relying on the fact that hasUserInteracted is set *after* this block.
+        }
+
          // Ensure user interaction flag is set if sfx are turned on via button
         if (areSfxOn && !hasUserInteracted) {
            hasUserInteracted = true;

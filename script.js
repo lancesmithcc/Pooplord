@@ -28,6 +28,8 @@ const PERSON_FRAME_CHANGE_INTERVAL = 250; // Milliseconds (4 frames per second)
 let backgroundMusic;
 const fartSounds = ['fart1.mp3', 'fart2.mp3', 'fart3.mp3'];
 let hasUserInteracted = false; // Flag to track user interaction for music autoplay
+let scoreMilestoneTracker = 0; // Tracks 500-point milestones for voice lines
+const milestonePhrases = ["oh crap yeah", "cool poo man", "super duty!"];
 
 // Get score display element from the DOM
 const scoreDisplay = document.getElementById('score-display');
@@ -51,8 +53,24 @@ gameInfo.addEventListener('mouseleave', () => {
 
 // Update score display
 function updateScore(points) {
+    const oldScore = score;
     score += points;
     scoreDisplay.innerHTML = `Score: ${score}`;
+
+    // Check for 500-point milestone
+    if (score > 0) {
+        const newMilestoneLevel = Math.floor(score / 500);
+        if (newMilestoneLevel > scoreMilestoneTracker) {
+            if (oldScore < newMilestoneLevel * 500) { // Ensure we only trigger once when crossing the threshold upwards
+                const randomPhrase = milestonePhrases[Math.floor(Math.random() * milestonePhrases.length)];
+                speakText(randomPhrase);
+            }
+            scoreMilestoneTracker = newMilestoneLevel;
+        } else if (newMilestoneLevel < scoreMilestoneTracker) {
+            // If score drops below a previously achieved milestone, reset the tracker
+            scoreMilestoneTracker = newMilestoneLevel;
+        }
+    }
     
     // Visual feedback for score change
     const pointsDisplay = document.createElement('div');
@@ -125,6 +143,7 @@ function handleItemCollision(item, index) {
         // Apply drugged effect for needles and pills
         if (item.type.emoji === '💉' || item.type.emoji === '💊') {
             character.classList.add('drugged-effect');
+            speakText("holy crap"); // Speak on drugged effect
             // Remove the class after the animation duration (1s) to allow re-triggering
             setTimeout(() => {
                 character.classList.remove('drugged-effect');
@@ -757,6 +776,25 @@ function playRandomFartSound() {
         const soundEffect = new Audio(soundToPlay);
         soundEffect.volume = 0.7; // Adjust volume for sound effects if needed
         soundEffect.play().catch(error => console.error(`Error playing sound ${soundToPlay}:`, error));
+    }
+}
+
+// Function to make the browser speak text
+function speakText(textToSpeak) {
+    if ('speechSynthesis' in window) {
+        // Cancel any previous utterances to prevent overlap / queue buildup
+        window.speechSynthesis.cancel(); 
+        
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        // Optional: Configure voice, pitch, rate
+        // utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === 'Google UK English Male'); // Example voice
+        // utterance.pitch = 1; // 0 to 2
+        // utterance.rate = 1; // 0.1 to 10
+        // utterance.volume = 1; // 0 to 1 (already default)
+        
+        window.speechSynthesis.speak(utterance);
+    } else {
+        console.warn("Web Speech API (Text-to-Speech) not supported by this browser.");
     }
 }
 

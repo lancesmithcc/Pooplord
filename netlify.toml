@@ -5,14 +5,14 @@
   command = "npm run build"
   functions = "netlify/functions"
 
-# Redirect all traffic to index.html for SPA
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# Redirect API traffic to functions
+# Redirect API traffic to functions (MUST COME BEFORE SPA REDIRECT)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
+  status = 200
+
+# Redirect all other traffic to index.html for SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
   status = 200 

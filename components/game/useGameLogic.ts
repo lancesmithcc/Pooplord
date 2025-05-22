@@ -5,7 +5,13 @@ import { v4 as uuidv4 } from 'uuid';
 // Google Maps specific types (basic for now)
 interface LatLngLiteral { lat: number; lng: number; }
 interface MapPoint { x: number; y: number; }
-interface GoogleMap { getProjection: () => any | null; getBounds: () => any | null; getZoom: () => number | undefined; getCenter: () => LatLngLiteral | undefined; }
+interface GoogleMap {
+  getProjection: () => MapOverlayProjection | null;
+  getBounds: () => any | null;
+  getZoom: () => number | undefined;
+  getCenter: () => LatLngLiteral | undefined;
+  addListener: (eventName: string, handler: (...args: any[]) => void) => any;
+}
 interface MapOverlayProjection {
   fromLatLngToDivPixel: (latLng: LatLngLiteral) => MapPoint | null;
   fromDivPixelToLatLng: (pixel: MapPoint) => LatLngLiteral | null;
@@ -64,14 +70,17 @@ const ITEM_UPDATE_INTERVAL = 50;
 
 export const useGameLogic = () => {
   const [gameState, setGameStateInternal] = useState<GameState>(initialGameState);
-  const gameStateRef = useRef(gameState);
-  const activeTimeouts = useRef<NodeJS.Timeout[]>([]);
+  const gameStateRef = useRef<GameState>(gameState);
+  const activeTimeouts = useRef<Array<number>>([]);
 
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
-  useEffect(() => { const timeouts = activeTimeouts.current; return () => { timeouts.forEach(clearTimeout); }; }, []);
+  useEffect(() => {
+    const timeouts = activeTimeouts.current;
+    return () => { timeouts.forEach(clearTimeout); };
+  }, []);
 
   const setGameState = useCallback((updater: GameState | ((prevState: GameState) => GameState)) => {
-    setGameStateInternal(prevState => {
+    setGameStateInternal((prevState: GameState) => {
       const nextState = typeof updater === 'function' ? updater(prevState) : updater;
       gameStateRef.current = nextState;
       return nextState;
@@ -81,7 +90,7 @@ export const useGameLogic = () => {
   const setMapContext = useCallback((map: GoogleMap, container: HTMLDivElement) => {
     const projection = map.getProjection();
     const center = map.getCenter();
-    setGameState(prev => ({
+    setGameState((prev: GameState) => ({
       ...prev,
       map,
       gameContainer: container,
@@ -89,12 +98,11 @@ export const useGameLogic = () => {
       character: center ? { ...prev.character, lat: center.lat, lng: center.lng } : prev.character,
     }));
     // Listen for map bounds changing to update projection if necessary
-    // This is a simplified listener. Real-world might need more robust handling (e.g. OverlayView)
-    map.getBounds(); // Initialize listener if not already there for bounds_changed
+    map.getBounds();
     const listener = map.addListener('bounds_changed', () => {
         const newProjection = map.getProjection();
         if (newProjection) {
-            setGameState(prevUpdate => ({...prevUpdate, projection: newProjection}));
+            setGameState((prevUpdate: GameState) => ({...prevUpdate, projection: newProjection}));
         }
     });
     // TODO: Store and clean up this listener properly
@@ -102,11 +110,11 @@ export const useGameLogic = () => {
 
   // Helper to update renderX, renderY for character and items
   const updateRenderCoordinates = useCallback(() => {
-    setGameState(prev => {
+    setGameState((prev: GameState) => {
       if (!prev.projection || !prev.gameContainer) return prev;
       const { projection, character, items } = prev;
       const charPoint = projection.fromLatLngToDivPixel({ lat: character.lat, lng: character.lng });
-      const updatedItems = items.map(item => {
+      const updatedItems = items.map((item: GameItemType) => {
         const itemPoint = projection.fromLatLngToDivPixel({ lat: item.lat, lng: item.lng });
         return { ...item, renderX: itemPoint?.x, renderY: itemPoint?.y };
       });
@@ -128,7 +136,7 @@ export const useGameLogic = () => {
 
 
   const moveCharacter = useCallback((dLat: number, dLng: number) => {
-    setGameState(prev => {
+    setGameState((prev: GameState) => {
       if (!prev.map) return prev;
       // dLat/dLng are now multipliers for speed
       const newLat = prev.character.lat + dLat * prev.character.speed;
@@ -139,7 +147,7 @@ export const useGameLogic = () => {
   }, [setGameState]);
 
  const setCharacterPosition = useCallback((pixelX: number, pixelY: number) => {
-    setGameState(prev => {
+    setGameState((prev: GameState) => {
       if (!prev.projection) return prev;
       const latLng = prev.projection.fromDivPixelToLatLng({ x: pixelX, y: pixelY });
       if (latLng) {
@@ -151,9 +159,9 @@ export const useGameLogic = () => {
   }, [setGameState]);
 
   const spawnItem = useCallback(() => {
-    setGameState(prev => {
+    setGameState((prev: GameState) => {
       if (!prev.map || !prev.projection || !prev.gameContainer) return prev;
-      if (prev.items.filter(item => item.status === 'active').length >= 20) return prev;
+      if (prev.items.filter((item: GameItemType) => item.status === 'active').length >= 20) return prev;
 
       const bounds = prev.map.getBounds();
       if (!bounds) return prev;
@@ -189,10 +197,10 @@ export const useGameLogic = () => {
   useEffect(() => {
     if (!gameState.map) return; // Don't move items if no map
     const itemMoveInterval = setInterval(() => {
-      setGameState(prev => {
+      setGameState((prev: GameState) => {
         if (!prev.map) return prev;
         const bounds = prev.map.getBounds();
-        const updatedItems = prev.items.map(item => {
+        const updatedItems = prev.items.map((item: GameItemType) => {
           if (item.status === 'disappearing') return item;
           let newLat = item.lat + item.dy; // dy for lat, dx for lng
           let newLng = item.lng + item.dx;
@@ -224,7 +232,7 @@ export const useGameLogic = () => {
     let itemsToKeep: GameItemType[] = [];
     let collisionOccurred = false;
 
-    currentGameState.items.forEach(item => {
+    currentGameState.items.forEach((item: GameItemType) => {
       if (item.status === 'disappearing' || !item.renderX || !item.renderY) {
         itemsToKeep.push(item);
         return;
@@ -239,8 +247,11 @@ export const useGameLogic = () => {
         collisionOccurred = true; scoreDelta += item.points; sizeDelta += item.sizeChange; speedDelta += item.speedChange;
         itemsToUpdate.push({ ...item, status: 'disappearing' });
         const timeoutId = setTimeout(() => {
-          setGameState(prev => ({ ...prev, items: prev.items.filter(i => i.id !== item.id) }));
-          activeTimeouts.current = activeTimeouts.current.filter(id => id !== timeoutId);
+          setGameState((prev: GameState) => ({
+            ...prev,
+            items: prev.items.filter((i: GameItemType) => i.id !== item.id)
+          }));
+          activeTimeouts.current = activeTimeouts.current.filter((id: number) => id !== timeoutId);
         }, ITEM_ANIMATION_DURATION);
         activeTimeouts.current.push(timeoutId);
       } else {
@@ -249,20 +260,20 @@ export const useGameLogic = () => {
     });
 
     if (collisionOccurred) {
-      setGameState(prev => {
+      setGameState((prev: GameState) => {
         const newSize = Math.max(MIN_CHAR_SIZE, Math.min(prev.character.size + sizeDelta, MAX_CHAR_SIZE));
         const newSpeed = Math.max(MIN_CHAR_SPEED, Math.min(prev.character.speed + speedDelta, MAX_CHAR_SPEED));
         return {
           ...prev,
           score: prev.score + scoreDelta,
-          items: [...itemsToKeep, ...itemsToUpdate.filter(collidedItem => !itemsToKeep.find(ik => ik.id === collidedItem.id))],
+          items: [...itemsToKeep, ...itemsToUpdate.filter((collidedItem: GameItemType) => !itemsToKeep.find((ik: GameItemType) => ik.id === collidedItem.id))],
           character: { ...prev.character, size: newSize, speed: newSpeed, width: newSize * REM_TO_PX, height: newSize * REM_TO_PX },
         };
       });
     }
   }, [
-    gameState.character.renderX, gameState.character.renderY, // Trigger on pixel position change
-    gameState.items, // Trigger if items array changes (e.g. for status or render coords)
+    gameState.character.renderX, gameState.character.renderY,
+    gameState.items,
     setGameState
   ]);
 

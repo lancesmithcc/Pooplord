@@ -27,6 +27,7 @@ const PERSON_FRAME_CHANGE_INTERVAL = 250; // Milliseconds (4 frames per second)
 // Audio elements and sound paths
 let backgroundMusic;
 const fartSounds = ['fart1.mp3', 'fart2.mp3', 'fart3.mp3'];
+let hasUserInteracted = false; // Flag to track user interaction for music autoplay
 
 // Get score display element from the DOM
 const scoreDisplay = document.getElementById('score-display');
@@ -151,12 +152,12 @@ function startCollisionDetection() {
 window.initMap = function() {
     console.log("Google Maps API loaded. Initializing map...");
     
-    // Initialize and play background music
+    // Initialize background music but don't play it yet
     if (!backgroundMusic) {
         backgroundMusic = new Audio('pooplord.mp3');
         backgroundMusic.loop = true;
-        backgroundMusic.volume = 0.3; // Adjust volume as needed (0.0 to 1.0)
-        backgroundMusic.play().catch(error => console.error("Error playing background music:", error));
+        backgroundMusic.volume = 0.4; // Adjusted volume (0.0 to 1.0)
+        // backgroundMusic.play().catch(error => console.error("Error playing background music:", error)); // Don't play here
     }
     
     directionsService = new google.maps.DirectionsService();
@@ -281,10 +282,12 @@ window.initMap = function() {
                 initializeItems();
                 adaptUIForDevice(); // Adapt UI after items and map are ready
                 
-                // Ensure music starts in fallback too if not already playing
+                // No need to try playing music here anymore, will be handled by user interaction
+                /*
                 if (backgroundMusic && backgroundMusic.paused) {
                     backgroundMusic.play().catch(error => console.error("Error playing background music (fallback):", error));
                 }
+                */
             },
             // Error callback
             (error) => {
@@ -386,11 +389,12 @@ window.initMap = function() {
                 initializeCharacterPosition();
                 initializeItems();
                 adaptUIForDevice(); // Adapt UI for fallback scenario too
-                
-                // Ensure music starts in fallback too if not already playing
+                // No need to try playing music here anymore
+                /*
                 if (backgroundMusic && backgroundMusic.paused) {
                      backgroundMusic.play().catch(error => console.error("Error playing background music (fallback error path):", error));
                 }
+                */
             },
             // Options
             {
@@ -604,6 +608,11 @@ function initializeCharacterPosition() {
 }
 
 document.addEventListener('keydown', (event) => {
+    if (!hasUserInteracted && backgroundMusic && backgroundMusic.paused) {
+        backgroundMusic.play().catch(error => console.error("Error starting background music on keydown:", error));
+        hasUserInteracted = true;
+    }
+
     const key = event.key.toLowerCase();
     let isMoving = false;
     let panX = 0;
@@ -654,6 +663,11 @@ let touchStartX = 0;
 let touchStartY = 0;
 
 character.addEventListener('touchstart', (event) => {
+    if (!hasUserInteracted && backgroundMusic && backgroundMusic.paused) {
+        backgroundMusic.play().catch(error => console.error("Error starting background music on touchstart:", error));
+        hasUserInteracted = true;
+    }
+
     isDragging = true;
     const touch = event.touches[0];
     touchStartX = touch.clientX;

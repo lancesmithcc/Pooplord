@@ -788,7 +788,7 @@ function speakText(textToSpeak) {
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
         // Optional: Configure voice, pitch, rate
         // utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === 'Google UK English Male'); // Example voice
-        // utterance.pitch = 1; // 0 to 2
+        utterance.pitch = 1.8; // 0 to 2, default is 1. Higher is more high-pitched.
         // utterance.rate = 1; // 0.1 to 10
         // utterance.volume = 1; // 0 to 1 (already default)
         

@@ -96,7 +96,7 @@
 
 **Phase 5: DeepSeek Reflections & Enhanced Audio**
 - [x] Create server endpoint to call DeepSeek API with eaten items.
-- [x] Craft prompt for DeepSeek to generate Pooplord's reflective paragraph with poop/bathroom metaphors.
+- [x] Craft prompt for DeepSeek to generate Pooplord's reflective paragraph with poop/bathroom metaphors. (Revised for introspective/existential tone)
 - [x] Client-side: Track recently eaten items.
 - [x] Client-side: Implement a timer (approx. 1 min) to trigger reflection requests.
 - [x] Client-side: Fetch reflection from server and speak using Web Speech API.

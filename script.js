@@ -40,7 +40,7 @@ let backgroundMusic;
 const fartSounds = ['fart1.mp3', 'fart2.mp3', 'fart3.mp3'];
 let hasUserInteracted = false; // Flag to track user interaction for music autoplay
 let scoreMilestoneTracker = 0; // Tracks 500-point milestones for voice lines
-const milestonePhrases = ["oh crap yeah", "cool poo man", "super duty!"];
+const milestonePhrases = ["oh crappidy crap yeah", "cool poop my man", "super duty! fartsicles!"];
 
 // Get score display element from the DOM
 const scoreDisplay = document.getElementById('score-display');

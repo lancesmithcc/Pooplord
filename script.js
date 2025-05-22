@@ -210,89 +210,10 @@ window.initMap = function() {
                 // Create map centered at user's location
                 map = new google.maps.Map(gameContainer, {
                     center: userLocation,
-                    zoom: 17, // Close enough to see buildings and streets
+                    zoom: 18, // Zoom in a bit more for satellite view
                     disableDefaultUI: true, // Remove default UI controls
-                    styles: [
-                        // Custom Dark Mode Map Style (Charcoal, Brown, Green)
-                        { elementType: "geometry", stylers: [{ color: "#242f3e" }] }, // Charcoal base
-                        { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-                        { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] }, // Brownish labels
-                        {
-                            featureType: "administrative.locality",
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#d59563" }], // Lighter brown for locality
-                        },
-                        {
-                            featureType: "poi", // Points of Interest
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#938170" }], // Muted brown for POI labels
-                        },
-                        {
-                            featureType: "poi.park", // Parks will be green
-                            elementType: "geometry",
-                            stylers: [{ color: "#263c3f" }], // Dark green for park geometry
-                        },
-                        {
-                            featureType: "poi.park",
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#6b9a76" }], // Lighter green for park labels
-                        },
-                        {
-                            featureType: "road",
-                            elementType: "geometry",
-                            stylers: [{ color: "#38414e" }], // Darker charcoal for roads
-                        },
-                        {
-                            featureType: "road",
-                            elementType: "geometry.stroke",
-                            stylers: [{ color: "#212a37" }],
-                        },
-                        {
-                            featureType: "road",
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#9ca5b3" }], // Light grey for road labels
-                        },
-                        {
-                            featureType: "road.highway",
-                            elementType: "geometry",
-                            stylers: [{ color: "#746855" }], // Brown for highways
-                        },
-                        {
-                            featureType: "road.highway",
-                            elementType: "geometry.stroke",
-                            stylers: [{ color: "#1f2835" }],
-                        },
-                        {
-                            featureType: "road.highway",
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#f3d19c" }], // Light brownish/yellow for highway labels
-                        },
-                        {
-                            featureType: "transit",
-                            elementType: "geometry",
-                            stylers: [{ color: "#2f3948" }],
-                        },
-                        {
-                            featureType: "transit.station",
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#d59563" }],
-                        },
-                        {
-                            featureType: "water",
-                            elementType: "geometry",
-                            stylers: [{ color: "#17263c" }], // Dark blue/charcoal for water
-                        },
-                        {
-                            featureType: "water",
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#515c6d" }],
-                        },
-                        {
-                            featureType: "water",
-                            elementType: "labels.text.stroke",
-                            stylers: [{ color: "#17263c" }],
-                        },
-                    ]
+                    mapTypeId: 'satellite' // Set map type to satellite
+                    // styles: [ ... ] // Remove or comment out custom styles
                 });
                 
                 directionsRenderer.setMap(map); // Attach renderer to the map
@@ -323,89 +244,10 @@ window.initMap = function() {
                 const defaultLocation = { lat: 37.7749, lng: -122.4194 };
                 map = new google.maps.Map(gameContainer, {
                     center: defaultLocation,
-                    zoom: 17,
+                    zoom: 18, // Zoom in a bit more for satellite view
                     disableDefaultUI: true,
-                    styles: [ // Duplicating styles for fallback, consider refactoring
-                         // Custom Dark Mode Map Style (Charcoal, Brown, Green)
-                        { elementType: "geometry", stylers: [{ color: "#242f3e" }] }, // Charcoal base
-                        { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-                        { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] }, // Brownish labels
-                        {
-                            featureType: "administrative.locality",
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#d59563" }], // Lighter brown for locality
-                        },
-                        {
-                            featureType: "poi", // Points of Interest
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#938170" }], // Muted brown for POI labels
-                        },
-                        {
-                            featureType: "poi.park", // Parks will be green
-                            elementType: "geometry",
-                            stylers: [{ color: "#263c3f" }], // Dark green for park geometry
-                        },
-                        {
-                            featureType: "poi.park",
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#6b9a76" }], // Lighter green for park labels
-                        },
-                        {
-                            featureType: "road",
-                            elementType: "geometry",
-                            stylers: [{ color: "#38414e" }], // Darker charcoal for roads
-                        },
-                        {
-                            featureType: "road",
-                            elementType: "geometry.stroke",
-                            stylers: [{ color: "#212a37" }],
-                        },
-                        {
-                            featureType: "road",
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#9ca5b3" }], // Light grey for road labels
-                        },
-                        {
-                            featureType: "road.highway",
-                            elementType: "geometry",
-                            stylers: [{ color: "#746855" }], // Brown for highways
-                        },
-                        {
-                            featureType: "road.highway",
-                            elementType: "geometry.stroke",
-                            stylers: [{ color: "#1f2835" }],
-                        },
-                        {
-                            featureType: "road.highway",
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#f3d19c" }], // Light brownish/yellow for highway labels
-                        },
-                        {
-                            featureType: "transit",
-                            elementType: "geometry",
-                            stylers: [{ color: "#2f3948" }],
-                        },
-                        {
-                            featureType: "transit.station",
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#d59563" }],
-                        },
-                        {
-                            featureType: "water",
-                            elementType: "geometry",
-                            stylers: [{ color: "#17263c" }], // Dark blue/charcoal for water
-                        },
-                        {
-                            featureType: "water",
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#515c6d" }],
-                        },
-                        {
-                            featureType: "water",
-                            elementType: "labels.text.stroke",
-                            stylers: [{ color: "#17263c" }],
-                        },
-                    ]
+                    mapTypeId: 'satellite' // Set map type to satellite for fallback too
+                    // styles: [ ... ] // Remove or comment out custom styles
                 });
                 
                 directionsRenderer.setMap(map); // Attach renderer to the map for fallback

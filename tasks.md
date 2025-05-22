@@ -80,6 +80,7 @@
 - [ ] Add button to toggle background music.
 - [ ] Add button to toggle game sounds (fart sounds, speech synthesis).
 - [ ] Ensure audio works on mobile after user interaction with new buttons.
+- [ ] Change map to satellite view.
 
 ### Later / Optional
 *   Consider leaderboard alternatives if desired.

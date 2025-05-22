@@ -178,6 +178,16 @@ function handleItemCollision(item, index) {
                 character.classList.remove('drugged-effect');
             }, 1000); // Matches CSS animation duration
         }
+    } else if (item.type.type === 'mushroom') {
+        // Special effect for mushroom
+        character.classList.add('mushroom-effect');
+        speakText("Whoa, man... the universe is, like, totally বজরা!"); // Example psychedelic phrase
+        setTimeout(() => {
+            character.classList.remove('mushroom-effect');
+        }, 5000); // Matches CSS animation duration (5s)
+        // No size change from mushroom, just points and reflection
+        character.classList.add('eating'); // Still show eating pulse briefly
+        setTimeout(() => character.classList.remove('eating'), 300);
     }
 
     // Remove the marker from the map

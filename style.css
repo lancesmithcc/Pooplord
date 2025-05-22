@@ -73,6 +73,10 @@ html, body {
     animation: spinAndColorChange 1s ease-out; /* Apply the animation */
 }
 
+#character.mushroom-effect {
+    animation: mushroomTrip 5s ease-in-out; /* Longer, more intense effect */
+}
+
 /* Game items styles */
 .game-item {
     position: absolute;
@@ -243,6 +247,33 @@ html, body {
     100% {
         transform: translate(-50%, -50%) rotate(360deg);
         filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7)) hue-rotate(360deg);
+    }
+}
+
+@keyframes mushroomTrip {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg) scale(1);
+        filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7)) hue-rotate(0deg);
+    }
+    20% { /* Spin faster, more color changes */
+        transform: translate(-50%, -50%) rotate(360deg) scale(1.2);
+        filter: drop-shadow(0 0 10px rgba(255, 0, 255, 0.8)) hue-rotate(120deg);
+    }
+    40% {
+        transform: translate(-50%, -50%) rotate(720deg) scale(1);
+        filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.8)) hue-rotate(240deg);
+    }
+    60% {
+        transform: translate(-50%, -50%) rotate(1080deg) scale(1.3);
+        filter: drop-shadow(0 0 10px rgba(255, 255, 0, 0.8)) hue-rotate(360deg);
+    }
+    80% {
+        transform: translate(-50%, -50%) rotate(1440deg) scale(1);
+        filter: drop-shadow(0 0 5px rgba(0, 255, 0, 0.8)) hue-rotate(480deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(1800deg) scale(1); /* 5 full spins */
+        filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7)) hue-rotate(600deg); /* Ends on a different hue rotation */
     }
 }
 

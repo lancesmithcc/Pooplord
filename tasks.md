@@ -113,6 +113,7 @@
 **Mushroom Item & Cosmic Reflections:**
 - [x] Define mushroom item (🍄) with high point value (e.g., 100x standard).
 - [x] Implement special DeepSeek prompt for mushroom consumption (secrets of the universe, conspiracy theories).
+- [x] Add 5-second spin and color change animation for mushroom consumption.
 
 ### Later / Optional
 *   Consider leaderboard alternatives if desired.

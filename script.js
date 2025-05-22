@@ -20,6 +20,9 @@ let directionsRenderer;
 
 const itemSpawnInterval = 2000; // Spawn new item every 2 seconds
 const itemMovementInterval = 50; // Update item positions every 50ms for smoother animation
+const ITEM_WANDER_SPEED = 0.75; // Meters per movement interval (e.g., 0.75m every 50ms = 15 m/s)
+const ITEM_STEPS_BEFORE_TURN = 80; // Approx. 4 seconds (80 * 50ms)
+const PERSON_FRAME_CHANGE_INTERVAL = 250; // Milliseconds (4 frames per second)
 
 // Get score display element from the DOM
 const scoreDisplay = document.getElementById('score-display');
@@ -451,9 +454,9 @@ function createItem() {
 
 // Function to spawn a marker at a specific point (potentially with a route)
 function spawnMarkerAtPoint(itemTypeDetails, positionLatLng, route = null) {
-    const itemEmoji = itemTypeDetails.emoji;
+    const initialEmoji = (itemTypeDetails.type === 'person') ? peopleEmojis[0] : itemTypeDetails.emoji;
     const markerLabel = {
-        text: itemEmoji,
+        text: initialEmoji,
         fontSize: '2rem', // Make emoji larger
         className: 'map-emoji-label' // Add class for potential styling
     };
@@ -476,8 +479,17 @@ function spawnMarkerAtPoint(itemTypeDetails, positionLatLng, route = null) {
         latLng: positionLatLng, // Store LatLng for distance calculation
         isFood: itemTypeDetails.type === 'food', // Keep for compatibility if needed, but prefer item.type.type
         isPerson: itemTypeDetails.type === 'person',
-        isNonEdible: itemTypeDetails.type === 'non-edible'
+        isNonEdible: itemTypeDetails.type === 'non-edible',
+        // Properties for wandering movement
+        currentMovementAngle: Math.random() * 360, // Initial random direction
+        stepsTakenInDirection: 0
     };
+
+    if (itemTypeDetails.type === 'person') {
+        itemObject.emojiFrames = peopleEmojis; // Reference to the global array of people emojis
+        itemObject.currentFrameIndex = 0;
+        itemObject.lastFrameChangeTime = performance.now();
+    }
 
     if (route) {
         itemObject.route = route;
@@ -505,72 +517,42 @@ function moveItems() {
     for (let i = allItemsOnMap.length - 1; i >= 0; i--) {
         const item = allItemsOnMap[i]; // This is our itemObject
 
-        if (item.route && item.route.overview_path && item.route.overview_path.length > 0) {
-            // This is the road-following logic, which is currently de-prioritized but kept for potential future use.
-            // For it to work correctly, item.animationStartTime and item.animationDuration need to be set when route is assigned.
-            const route = item.route;
-            const path = route.overview_path;
-            
-            let elapsedTime = now - (item.animationStartTime || now); // Ensure animationStartTime is initialized
-            const duration = item.animationDuration || 5000; // Default duration if not set
+        // Wandering Movement Logic for ALL items
+        item.stepsTakenInDirection++;
+        if (item.stepsTakenInDirection >= ITEM_STEPS_BEFORE_TURN) {
+            item.currentMovementAngle = Math.random() * 360; // Pick new random direction
+            item.stepsTakenInDirection = 0;
+        }
 
-            if (elapsedTime >= duration) {
-                elapsedTime = duration; 
-            }
-            
-            const progress = elapsedTime / duration; 
+        // Calculate new position based on current angle and speed
+        const newPosition = google.maps.geometry.spherical.computeOffset(
+            item.latLng, // Current position
+            ITEM_WANDER_SPEED, // Distance to move in this step
+            item.currentMovementAngle // Direction of movement
+        );
 
-            if (progress >= 1) {
-                 if (path.length > 0) {
-                    item.marker.setPosition(path[path.length - 1]);
-                    item.latLng = path[path.length - 1];
-                 }
-                continue; 
-            }
-
-            const totalPathDistance = google.maps.geometry.spherical.computeLength(path);
-            const distanceToTravel = totalPathDistance * progress;
-            
-            let currentCumulativeDistance = 0;
-            let targetPosition = path[0];
-
-            for (let j = 0; j < path.length - 1; j++) {
-                const segmentStart = path[j];
-                const segmentEnd = path[j+1];
-                const segmentDistance = google.maps.geometry.spherical.computeDistanceBetween(segmentStart, segmentEnd);
-
-                if (currentCumulativeDistance + segmentDistance >= distanceToTravel) {
-                    const distanceIntoSegment = distanceToTravel - currentCumulativeDistance;
-                    const fractionIntoSegment = distanceIntoSegment / segmentDistance;
-                    targetPosition = google.maps.geometry.spherical.interpolate(segmentStart, segmentEnd, fractionIntoSegment);
-                    break;
-                }
-                currentCumulativeDistance += segmentDistance;
-                if (j === path.length - 2) { 
-                     targetPosition = path[path.length -1]; 
-                }
-            }
-            
-            if(targetPosition) {
-                item.marker.setPosition(targetPosition);
-                item.latLng = targetPosition; // Update stored LatLng in our itemObject
-            }
-
-        } else {
-            // Fallback: Simple floating animation (vertical bobbing)
-            const floatAmplitude = 0.00001; // Small change in latitude for bobbing
-            const floatSpeed = 0.002; 
-            
-            // Initialize originalLat on the itemObject if not present
-            if (typeof item.originalLat === 'undefined') {
-                item.originalLat = item.marker.getPosition().lat();
-            }
-
-            const newLat = item.originalLat + Math.sin(now * floatSpeed) * floatAmplitude;
-            const newPosition = new google.maps.LatLng(newLat, item.marker.getPosition().lng());
-            
+        if (newPosition) {
             item.marker.setPosition(newPosition);
             item.latLng = newPosition; // Update stored LatLng in our itemObject
+        } else {
+            // If computeOffset somehow fails (e.g. item at pole), pick new direction immediately
+            item.currentMovementAngle = Math.random() * 360;
+            item.stepsTakenInDirection = 0;
+            continue; // Skip to next item for this frame
+        }
+
+        // Person Emoji Animation (if applicable)
+        if (item.isPerson && item.emojiFrames) {
+            if (now - item.lastFrameChangeTime > PERSON_FRAME_CHANGE_INTERVAL) {
+                item.currentFrameIndex = (item.currentFrameIndex + 1) % item.emojiFrames.length;
+                const newLabel = {
+                    text: item.emojiFrames[item.currentFrameIndex],
+                    fontSize: '2rem',
+                    className: 'map-emoji-label'
+                };
+                item.marker.setLabel(newLabel);
+                item.lastFrameChangeTime = now;
+            }
         }
     }
 }

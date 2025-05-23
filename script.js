@@ -1044,9 +1044,8 @@ async function requestPooplordReflection() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Error fetching reflection:", response.status, errorData.error, errorData.details);
-            return;
+            console.error("API request failed with status:", response.status);
+            throw new Error(`HTTP ${response.status}`);
         }
 
         const data = await response.json();
@@ -1065,10 +1064,78 @@ async function requestPooplordReflection() {
             }
         } else {
             console.error("No reflection content in response:", data);
+            throw new Error("No reflection content");
         }
     } catch (error) {
         console.error("Failed to request Pooplord reflection:", error);
+        console.log("Using fallback reflection...");
+        
+        // Fallback reflection system
+        const fallbackReflection = generateFallbackReflection(itemsToSend);
+        currentReflectionText = fallbackReflection;
+        
+        if (isMobileDevice() && thoughtBubbleContainer) {
+            console.log("Mobile device detected, showing fallback thought bubble.");
+            thoughtBubbleContainer.classList.remove('hidden');
+        } else {
+            console.log("Using fallback reflection for desktop.");
+            speakText(currentReflectionText);
+            recentlyEatenItems = []; // Clear for desktop after speaking
+        }
     }
+}
+
+// Fallback reflection generator for when API fails
+function generateFallbackReflection(items) {
+    const itemsText = items.join(', ');
+    
+    // Check for special items
+    if (items.includes('🍄')) {
+        const mushroomReflections = [
+            "The mushroom has opened my COSMIC CONSCIOUSNESS! These other snacks are just interdimensional breadcrumbs leading to the universal toilet bowl!",
+            "WHOA DUDE! The mushroom revealed that all food is just matter transitioning through the great digestive cycle of reality!",
+            "The veil is lifted! I can see the TRUTH - we're all just cosmic poops floating through the galactic septic system!"
+        ];
+        return mushroomReflections[Math.floor(Math.random() * mushroomReflections.length)];
+    }
+    
+    if (items.includes('🛸')) {
+        const ufoReflections = [
+            "THEY'RE WATCHING! The aliens study my magnificent bowel movements! These other foods are TRACKING DEVICES!",
+            "The UFO revealed the TRUTH - toilets are communication devices to the mothership! Wake up, sheeple!",
+            "I've been ABDUCTED! The gray aliens are just constipated beings studying my superior digestive system!"
+        ];
+        return ufoReflections[Math.floor(Math.random() * ufoReflections.length)];
+    }
+    
+    if (items.includes('🐒')) {
+        const monkeyReflections = [
+            "OOK OOK! My brain went full BANANA MODE! These snacks are all just monkey business in disguise! WHEEEEE!",
+            "Going completely BANANAS! Life is a barrel of laughs and my toilet is the ultimate playground! Ook ook!",
+            "MONKEY BRAIN ACTIVATED! Everything is BANANAS now! Time to fling some wisdom around like a crazy ape!"
+        ];
+        return monkeyReflections[Math.floor(Math.random() * monkeyReflections.length)];
+    }
+    
+    if (items.includes('💸')) {
+        const moneyReflections = [
+            "KA-CHING! I'm FILTHY RICH! My golden turds are worth more than your entire portfolio, peasants!",
+            "MONEY MONEY MONEY! I'm the Warren Buffet of bowel movements! Time for some premium toilet paper!",
+            "Show me the MONEY! My toilet is made of solid gold because I'm the ultimate CRAPPIONAIRE!"
+        ];
+        return moneyReflections[Math.floor(Math.random() * moneyReflections.length)];
+    }
+    
+    // General unhinged reflections
+    const generalReflections = [
+        `These ${itemsText} are WHISPERING to my intestines! Plot twist: what if doorknobs are government spy devices?!`,
+        `Just consumed ${itemsText} and now I'm questioning EVERYTHING! Are clouds just sky-farts from invisible giants?!`,
+        `${itemsText} triggered an EXISTENTIAL CRISIS! What if we're all just cosmic droppings in the universe's toilet bowl?!`,
+        `These snacks ${itemsText} made me realize - life is just one big digestive tract and we're all just passing through!`,
+        `After eating ${itemsText} I've concluded that toilets are definitely portals to the Poop Dimension! WAKE UP!`
+    ];
+    
+    return generalReflections[Math.floor(Math.random() * generalReflections.length)];
 }
 
 // Event listener for the speak thoughts button in the thought bubble

@@ -27,7 +27,8 @@ const AI_POOPLORD_TARGET_RADIUS = 5; // Radius within which AI considers target 
 
 // Variables for DeepSeek Reflections
 let recentlyEatenItems = [];
-const REFLECTION_INTERVAL = 60000; // 60 seconds
+const REFLECTION_ITEM_TRIGGER = 10; // Trigger reflection every 10 items
+let itemsEatenCount = 0; // Track total items eaten for reflection trigger
 let currentReflectionText = ""; // Store fetched reflection for mobile button
 
 // DOM elements for thought bubble
@@ -153,6 +154,13 @@ function handleItemCollision(item, index) {
 
     updateScore(item.type.points);
     recentlyEatenItems.push(item.type.emoji); // Add emoji to recently eaten list
+    itemsEatenCount++; // Increment items eaten counter
+    
+    // Trigger reflection every 10 items instead of time-based
+    if (itemsEatenCount % REFLECTION_ITEM_TRIGGER === 0) {
+        console.log(`Triggered reflection after ${itemsEatenCount} items`);
+        requestPooplordReflection();
+    }
 
     if (item.type.type === 'person') {
         updateCharacterSize(item.type.sizeIncrease);
@@ -651,7 +659,6 @@ function initializeItems() {
     startItemMovement(); // Start item movement
     startCollisionDetection(); // Start collision detection with player
     setInterval(updateAIPooplords, 200); // Update AI pooplords every 200ms
-    startReflectionTimer(); // Start the timer for Pooplord's reflections
 }
 
 // Leaderboard functionality removed
@@ -1009,10 +1016,6 @@ function updateAIPooplords() {
 }
 
 // --- DeepSeek Reflection Logic ---
-function startReflectionTimer() {
-    setInterval(requestPooplordReflection, REFLECTION_INTERVAL);
-}
-
 async function requestPooplordReflection() {
     if (!areSfxOn) return; // Don't request if sound effects (and thus speech) are off
     if (recentlyEatenItems.length === 0) {
@@ -1027,7 +1030,9 @@ async function requestPooplordReflection() {
         return;
     }
 
-    console.log("Requesting Pooplord reflection for items:", recentlyEatenItems);
+    // Only send the last 5 items to avoid timeout issues
+    const itemsToSend = recentlyEatenItems.slice(-5);
+    console.log("Requesting Pooplord reflection for items:", itemsToSend);
 
     try {
         const response = await fetch('/api/get-pooplord-reflection', {
@@ -1035,7 +1040,7 @@ async function requestPooplordReflection() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ eatenItems: [...recentlyEatenItems] }) // Send a copy
+            body: JSON.stringify({ eatenItems: [...itemsToSend] }) // Send only last 5 items
         });
 
         if (!response.ok) {

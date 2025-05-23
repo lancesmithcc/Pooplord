@@ -134,6 +134,21 @@
     - [x] Make general reflections more unhinged, random, and chaotic.
     - [x] Add stream-of-consciousness style with bizarre logical leaps.
     - [x] Implement specific reflection types for each special item.
+    - [x] Change from time-based (60 seconds) to item-count-based (every 10 items) reflections.
+    - [x] Optimize reflection requests to send only last 5 items to avoid timeout issues.
+
+**Phase 7: Mobile UI Optimization & Bug Fixes**
+- [x] **Mobile UI:**
+    - [x] Optimize HUD, logo, score, and sound controls for mobile devices.
+    - [x] Make UI elements more compact but still visible on mobile.
+- [x] **Audio/Speech Fixes:**
+    - [x] Improve audio and speech synthesis initialization.
+    - [x] Add proper audio context unlocking for browser restrictions.
+    - [x] Add user interaction detection for reliable audio/speech startup.
+- [x] **Reflection System Improvements:**
+    - [x] Switch from timer-based to item-count-based reflections (every 10 items).
+    - [x] Limit items sent to DeepSeek API to last 5 items to prevent timeouts.
+    - [x] Address 502 Bad Gateway errors from Netlify function timeouts.
 
 ### Later / Optional
 *   Consider leaderboard alternatives if desired.

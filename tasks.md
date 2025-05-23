@@ -150,6 +150,14 @@
     - [x] Limit items sent to DeepSeek API to last 5 items to prevent timeouts.
     - [x] Address 502 Bad Gateway errors from Netlify function timeouts.
 
+**Phase 8: Level System & Advanced Game Mechanics**
+- [x] **Level-Up System:**
+    - [x] Track player level with increments every 10,000 points.
+    - [x] Implement exciting level-up animation with retro video game font.
+    - [x] Add special paranoid level-up reflections through DeepSeek.
+    - [x] Create fallback level-up reflections for when API fails.
+    - [x] Include level-up sound effect when transitioning to new level.
+
 ### Later / Optional
 *   Consider leaderboard alternatives if desired.
 *   Advanced item behaviors (e.g., fleeing, chasing).

@@ -44,7 +44,65 @@ exports.handler = async function(event, context) {
         };
     }
 
-    let { eatenItems } = requestBody;
+    // Check if this is a level-up reflection request
+    const { eatenItems, isLevelUp, level } = requestBody;
+
+    // Handle level-up reflections
+    if (isLevelUp) {
+        console.log(`Generating level-up reflection for level ${level}`);
+        
+        // Special level-up prompt
+        const levelUpPrompt = `You are Pooplord, a sentient poop emoji who just reached LEVEL ${level} in your game! 
+        Generate a paranoid, self-reflective, grandiose comment about your increasing powers and evolution as the lord of poop. 
+        Make it about 30-40 words. Use toilet/bathroom humor with a mix of video game power-up references and paranoid delusions of grandeur.
+        Example: "LEVEL UP! I can feel the transformation... my fecal matter TRANSCENDING! The world's toilets whisper my name in fear! My excremental essence grows stronger - soon ALL plumbing will recognize me as their overlord! THE SEWERS ARE MINE!"
+        Be wild, paranoid, and megalomaniacal about your increasing poop powers.`;
+        
+        const deepSeekPayload = {
+            model: 'deepseek-chat',
+            messages: [
+                { role: 'user', content: levelUpPrompt }
+            ],
+            max_tokens: 75,
+            temperature: 0.8,
+        };
+        
+        console.log('Sending level-up request to DeepSeek...');
+        
+        try {
+            const deepSeekResponse = await fetch('https://api.deepseek.com/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${deepSeekApiKey}`
+                },
+                body: JSON.stringify(deepSeekPayload)
+            });
+            
+            if (!deepSeekResponse.ok) {
+                throw new Error(`DeepSeek API error: ${deepSeekResponse.status}`);
+            }
+            
+            const responseData = await deepSeekResponse.json();
+            const reflection = responseData.choices[0].message.content.trim();
+            
+            return {
+                statusCode: 200,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reflection })
+            };
+        } catch (error) {
+            console.error('Error generating level-up reflection:', error);
+            return {
+                statusCode: 500,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    error: 'Failed to generate level-up reflection',
+                    details: error.message
+                })
+            };
+        }
+    }
 
     if (!eatenItems || !Array.isArray(eatenItems) || eatenItems.length === 0) {
         return {

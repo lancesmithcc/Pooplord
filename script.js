@@ -31,6 +31,10 @@ const REFLECTION_ITEM_TRIGGER = 10; // Trigger reflection every 10 items
 let itemsEatenCount = 0; // Track total items eaten for reflection trigger
 let currentReflectionText = ""; // Store fetched reflection for mobile button
 
+// Variables for level system
+let currentLevel = 1;
+const LEVEL_UP_THRESHOLD = 10000; // Level up every 10,000 points
+
 // DOM elements for thought bubble
 const thoughtBubbleContainer = document.getElementById('thought-bubble-container');
 const speakThoughtsBtn = document.getElementById('speak-thoughts-btn');
@@ -85,6 +89,18 @@ function updateScore(points) {
     const oldScore = score;
     score += points;
     scoreDisplay.innerHTML = `Score: ${score}`;
+
+    // Check for level up (every 10,000 points)
+    const oldLevel = Math.floor(oldScore / LEVEL_UP_THRESHOLD) + 1;
+    const newLevel = Math.floor(score / LEVEL_UP_THRESHOLD) + 1;
+    
+    if (newLevel > oldLevel) {
+        // Level up!
+        currentLevel = newLevel;
+        console.log(`LEVEL UP! Now at level ${currentLevel}`);
+        showLevelUpAnimation(currentLevel);
+        requestLevelUpReflection(currentLevel);
+    }
 
     // Check for 500-point milestone
     if (score > 0) {
@@ -369,11 +385,10 @@ const nonEdibleItems = [
 ];
 
 const peopleEmojis = [
-    '🚶', '🚶‍♂️', '🚶‍♀️', '🚶‍➡️', '🚶‍♀️‍➡️', '🚶‍♂️‍➡️',
+    '🚶', '🚶‍♂️', '🚶‍♀️', 
     '🧍', '🧍‍♂️', '🧍‍♀️',
-    '🧎', '🧎‍♂️', '🧎‍♀️', '🧎‍➡️', '🧎‍♀️‍➡️', '🧎‍♂️‍➡️',
-    '🧑‍🦯', '🧑‍🦯‍➡️', '👨‍🦯', '👨‍🦯‍➡️', '👩‍🦯', '👩‍🦯‍➡️',
-    '🧑‍🦼', '🧑‍🦼‍➡️', '👨‍🦼', '👨‍🦼‍➡️', '👩‍🦼', '👩‍🦼‍➡️'
+    '🕺', '💃', '🏃‍♂️', '🏃‍♀️',
+    '🧎‍♂️', '🧎‍♀️'
 ];
 
 const peopleItemTypes = peopleEmojis.map(emoji => ({
@@ -1240,4 +1255,89 @@ function unlockAudioAndSpeech() {
     }
     
     hasUserInteracted = true;
+}
+
+// Function to display a level-up animation
+function showLevelUpAnimation(level) {
+    // Create level-up announcement element
+    const levelUpAnnouncement = document.createElement('div');
+    levelUpAnnouncement.className = 'level-up-announcement';
+    levelUpAnnouncement.innerHTML = `<span>LEVEL ${level}!</span>`;
+    document.body.appendChild(levelUpAnnouncement);
+    
+    // Apply the animation after a tiny delay to ensure the element is rendered
+    setTimeout(() => {
+        levelUpAnnouncement.classList.add('active');
+        
+        // Play level-up sound if SFX enabled
+        if (areSfxOn) {
+            const levelUpSound = new Audio('fart1.mp3'); // Using existing sound as placeholder
+            levelUpSound.volume = 1.0;
+            levelUpSound.play().catch(error => console.error("Error playing level-up sound:", error));
+        }
+        
+        // Remove the element after animation completes
+        setTimeout(() => {
+            levelUpAnnouncement.classList.remove('active');
+            setTimeout(() => {
+                document.body.removeChild(levelUpAnnouncement);
+            }, 500); // Wait for fade out
+        }, 3000); // Display for 3 seconds
+    }, 10);
+}
+
+// Function to request a special level-up reflection from DeepSeek
+async function requestLevelUpReflection(level) {
+    if (!areSfxOn) return; // Don't request if sound effects (and thus speech) are off
+    
+    console.log("Requesting level-up reflection for level:", level);
+    
+    try {
+        const response = await fetch('/api/get-pooplord-reflection', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                eatenItems: ['🏆'], // Special item for level-up
+                isLevelUp: true,
+                level: level
+            })
+        });
+
+        if (!response.ok) {
+            console.error("Level-up API request failed with status:", response.status);
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.reflection) {
+            console.log("Level-up reflection:", data.reflection);
+            // Wait a bit for level animation to be seen first
+            setTimeout(() => {
+                speakText(data.reflection);
+            }, 2000);
+        } else {
+            console.error("No level-up reflection content in response:", data);
+            throw new Error("No reflection content");
+        }
+    } catch (error) {
+        console.error("Failed to request level-up reflection:", error);
+        
+        // Fallback level-up reflections
+        const fallbackLevelUpReflections = [
+            `LEVEL ${level}! My poop powers are INTENSIFYING! I'm practically a sentient sewer system now!`,
+            `HOLY CRAP! LEVEL ${level}! I'm evolving into the ultimate fecal force of the universe!`,
+            `LEVEL ${level} UNLOCKED! My existence is becoming more potent than a gas station bathroom after taco Tuesday!`,
+            `BEHOLD MY POWER - LEVEL ${level}! I'm basically the deity of defecation now!`,
+            `ASCENDED TO LEVEL ${level}! My consciousness expands through the sewers of reality!`
+        ];
+        
+        const fallbackReflection = fallbackLevelUpReflections[Math.floor(Math.random() * fallbackLevelUpReflections.length)];
+        
+        // Wait a bit for level animation to be seen first
+        setTimeout(() => {
+            speakText(fallbackReflection);
+        }, 2000);
+    }
 } 

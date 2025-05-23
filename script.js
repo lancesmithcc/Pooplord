@@ -192,6 +192,35 @@ function handleItemCollision(item, index) {
         // No size change from mushroom, just points and reflection
         character.classList.add('eating'); // Still show eating pulse briefly
         setTimeout(() => character.classList.remove('eating'), 300);
+    } else if (item.type.type === 'ufo') {
+        // UFO teleports character to other side of the globe
+        teleportToOtherSideOfGlobe();
+        character.classList.add('ufo-effect');
+        speakText("Beam me up! The truth is out there!"); 
+        setTimeout(() => {
+            character.classList.remove('ufo-effect');
+        }, 2000);
+        character.classList.add('eating'); // Show eating pulse briefly
+        setTimeout(() => character.classList.remove('eating'), 300);
+    } else if (item.type.type === 'monkey') {
+        // Monkey makes character spin and move erratically
+        startMonkeyEffect();
+        character.classList.add('monkey-effect');
+        speakText("Oook oook! Banana brain activated!");
+        setTimeout(() => {
+            character.classList.remove('monkey-effect');
+        }, 3000);
+        character.classList.add('eating'); // Show eating pulse briefly
+        setTimeout(() => character.classList.remove('eating'), 300);
+    } else if (item.type.type === 'money') {
+        // Money gives huge points and materialistic reflection
+        character.classList.add('money-effect');
+        speakText("Ka-ching! Show me the money, baby!");
+        setTimeout(() => {
+            character.classList.remove('money-effect');
+        }, 2000);
+        character.classList.add('eating'); // Show eating pulse briefly
+        setTimeout(() => character.classList.remove('eating'), 300);
     }
 
     // Remove the marker from the map
@@ -348,7 +377,14 @@ const mushroomItem = [
     { emoji: '🍄', points: 1500, type: 'mushroom' } // Super high points, special reflection type
 ];
 
-const allItemTypes = [...foodItems, ...nonEdibleItems, ...peopleItemTypes, ...mushroomItem];
+// NEW SPECIAL ITEMS
+const specialItems = [
+    { emoji: '🛸', points: 500, type: 'ufo' }, // Teleport to other side of globe, paranoid reflections
+    { emoji: '🐒', points: 300, type: 'monkey' }, // Erratic movement, silly reflections  
+    { emoji: '💸', points: 1000000, type: 'money' } // Huge points, materialistic reflections
+];
+
+const allItemTypes = [...foodItems, ...nonEdibleItems, ...peopleItemTypes, ...mushroomItem, ...specialItems];
 let allItemsOnMap = []; // Array to store active item markers
 const collisionRadius = 20; // meters for collision detection with markers
 
@@ -910,4 +946,55 @@ if (speakThoughtsBtn && thoughtBubbleContainer) {
         thoughtBubbleContainer.classList.add('hidden');
         currentReflectionText = ""; // Clear stored text
     });
+}
+
+// Variables for monkey effect
+let monkeyEffectActive = false;
+let monkeyEffectTimer = null;
+
+// Function to teleport character to other side of globe (UFO effect)
+function teleportToOtherSideOfGlobe() {
+    if (!map) return;
+    
+    const currentCenter = map.getCenter();
+    // Calculate antipodal point (opposite side of globe)
+    const antipodalLat = -currentCenter.lat();
+    let antipodalLng = currentCenter.lng() + 180;
+    
+    // Normalize longitude to -180 to 180 range
+    if (antipodalLng > 180) {
+        antipodalLng = antipodalLng - 360;
+    }
+    
+    const newLocation = new google.maps.LatLng(antipodalLat, antipodalLng);
+    
+    // Smooth pan to new location
+    map.panTo(newLocation);
+    
+    console.log(`Teleported from ${currentCenter.lat()}, ${currentCenter.lng()} to ${antipodalLat}, ${antipodalLng}`);
+}
+
+// Function to start monkey effect (erratic movement)
+function startMonkeyEffect() {
+    if (monkeyEffectActive) return; // Prevent multiple concurrent effects
+    
+    monkeyEffectActive = true;
+    const originalMovementHandler = map;
+    let erraticMoveCount = 0;
+    const maxErraticMoves = 30; // About 3 seconds at 100ms intervals
+    
+    const erraticMovement = setInterval(() => {
+        if (!map || erraticMoveCount >= maxErraticMoves) {
+            clearInterval(erraticMovement);
+            monkeyEffectActive = false;
+            return;
+        }
+        
+        // Random erratic movement
+        const randomX = (Math.random() - 0.5) * 40; // -20 to 20 pixels
+        const randomY = (Math.random() - 0.5) * 40; // -20 to 20 pixels
+        
+        map.panBy(randomX, randomY);
+        erraticMoveCount++;
+    }, 100); // Move every 100ms for erratic effect
 } 

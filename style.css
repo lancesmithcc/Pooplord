@@ -46,7 +46,7 @@ html, body {
 
 #character {
     font-size: 2rem; /* Initial size */
-    position: absolute;
+    position: fixed; /* Changed from absolute for more robust viewport centering */
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%); /* Base centering */
@@ -370,4 +370,248 @@ html, body {
     border-right: 10px solid transparent;
     border-top: 15px solid #fff; /* White tail, same as bubble bg */
     /* For border to show on tail, might need more complex SVG or multiple pseudo-elements */
+}
+
+/* UFO effect - teleportation shimmer and glow */
+#character.ufo-effect {
+    animation: ufoTeleport 2s ease-in-out;
+}
+
+@keyframes ufoTeleport {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7));
+    }
+    25% {
+        transform: translate(-50%, -50%) scale(1.2);
+        filter: drop-shadow(0 0 20px rgba(0, 255, 0, 1)) brightness(1.5);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.5);
+        filter: drop-shadow(0 0 30px rgba(0, 255, 0, 1)) brightness(2) blur(2px);
+        opacity: 0.8;
+    }
+    75% {
+        transform: translate(-50%, -50%) scale(1.2);
+        filter: drop-shadow(0 0 20px rgba(0, 255, 0, 1)) brightness(1.5);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7));
+    }
+}
+
+/* Monkey effect - wild spinning and color changes */
+#character.monkey-effect {
+    animation: monkeyMadness 3s ease-in-out;
+}
+
+@keyframes monkeyMadness {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg) scale(1);
+        filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7)) hue-rotate(0deg);
+    }
+    15% {
+        transform: translate(-50%, -50%) rotate(180deg) scale(1.3);
+        filter: drop-shadow(0 0 10px rgba(255, 165, 0, 0.9)) hue-rotate(45deg);
+    }
+    30% {
+        transform: translate(-50%, -50%) rotate(360deg) scale(0.8);
+        filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.8)) hue-rotate(90deg);
+    }
+    45% {
+        transform: translate(-50%, -50%) rotate(540deg) scale(1.4);
+        filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.9)) hue-rotate(135deg);
+    }
+    60% {
+        transform: translate(-50%, -50%) rotate(720deg) scale(0.7);
+        filter: drop-shadow(0 0 6px rgba(255, 255, 0, 0.8)) hue-rotate(180deg);
+    }
+    75% {
+        transform: translate(-50%, -50%) rotate(900deg) scale(1.2);
+        filter: drop-shadow(0 0 10px rgba(255, 0, 255, 0.9)) hue-rotate(225deg);
+    }
+    90% {
+        transform: translate(-50%, -50%) rotate(1080deg) scale(0.9);
+        filter: drop-shadow(0 0 8px rgba(0, 255, 0, 0.8)) hue-rotate(270deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(1260deg) scale(1); /* 3.5 full spins */
+        filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7)) hue-rotate(315deg);
+    }
+}
+
+/* Money effect - golden glow and bling */
+#character.money-effect {
+    animation: moneyBling 2s ease-in-out;
+}
+
+@keyframes moneyBling {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7));
+    }
+    20% {
+        transform: translate(-50%, -50%) scale(1.3);
+        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 1)) brightness(1.8);
+    }
+    40% {
+        transform: translate(-50%, -50%) scale(1.5);
+        filter: drop-shadow(0 0 25px rgba(255, 215, 0, 1)) brightness(2.2) saturate(2);
+    }
+    60% {
+        transform: translate(-50%, -50%) scale(1.3);
+        filter: drop-shadow(0 0 20px rgba(255, 215, 0, 1)) brightness(2) saturate(1.8);
+    }
+    80% {
+        transform: translate(-50%, -50%) scale(1.1);
+        filter: drop-shadow(0 0 10px rgba(255, 215, 0, 1)) brightness(1.5);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        filter: drop-shadow(0 0 5px rgba(139, 69, 19, 0.7));
+    }
+}
+
+/* Mobile-specific optimizations */
+@media screen and (max-width: 768px) {
+    /* Make HUD more compact on mobile */
+    #game-hud {
+        padding: 5px 10px; /* Reduce padding */
+        background-color: rgba(0, 0, 0, 0.7); /* Slightly more opaque for better readability */
+    }
+    
+    #hud-logo {
+        font-size: 1.8rem; /* Smaller logo on mobile */
+        text-shadow: 1px 1px 2px rgba(139, 69, 19, 0.8); /* Adjust shadow */
+    }
+    
+    #score-display {
+        font-size: 1.4rem; /* Smaller score text */
+    }
+    
+    /* Make sound controls more compact */
+    #sound-controls {
+        bottom: 10px;
+        right: 10px;
+        gap: 5px; /* Reduce gap between buttons */
+    }
+    
+    #sound-controls button {
+        padding: 6px 8px; /* Smaller padding */
+        font-size: 0.8rem; /* Smaller font size */
+        border-radius: 4px; /* Slightly smaller border radius */
+        min-width: 32px; /* Ensure buttons are touch-friendly */
+        min-height: 32px;
+    }
+    
+    /* Make instructions panel smaller on mobile */
+    #instructions-panel {
+        bottom: 10px;
+        left: 10px;
+        padding: 3px; /* Smaller initial padding */
+    }
+    
+    #instructions-panel:hover {
+        padding: 8px; /* Smaller hover padding */
+    }
+    
+    #instructions-content {
+        font-size: 0.7rem; /* Smaller instruction text */
+        line-height: 1.2;
+    }
+    
+    #instructions-panel:not(:hover) #instructions-content p:last-child {
+        font-size: 0.8rem;
+        padding: 3px 6px; /* Smaller padding for hint text */
+    }
+    
+    /* Make thought bubble more appropriate for mobile */
+    #thought-bubble-container {
+        bottom: 60px; /* Position above sound controls */
+        width: 85%; /* Slightly smaller width */
+        max-width: 280px;
+        padding: 12px; /* Reduce padding */
+    }
+    
+    .thought-bubble-content p {
+        font-size: 0.8rem; /* Smaller text in thought bubble */
+    }
+    
+    #speak-thoughts-btn {
+        padding: 6px 12px; /* Smaller button padding */
+        font-size: 0.8rem;
+    }
+    
+    /* Ensure character size is appropriate on mobile */
+    #character {
+        font-size: 1.8rem; /* Slightly smaller initial character size on mobile */
+    }
+    
+    /* Make points popup smaller on mobile */
+    .points-popup {
+        font-size: 1.2rem; /* Smaller points popup */
+    }
+}
+
+/* Extra small mobile devices (phones in portrait) */
+@media screen and (max-width: 480px) {
+    #game-hud {
+        padding: 3px 8px; /* Even more compact */
+    }
+    
+    #hud-logo {
+        font-size: 1.5rem; /* Even smaller logo */
+    }
+    
+    #score-display {
+        font-size: 1.2rem; /* Even smaller score */
+    }
+    
+    #sound-controls button {
+        padding: 4px 6px;
+        font-size: 0.7rem;
+        min-width: 28px;
+        min-height: 28px;
+    }
+    
+    #thought-bubble-container {
+        width: 90%;
+        max-width: 250px;
+        padding: 10px;
+    }
+    
+    #character {
+        font-size: 1.6rem; /* Even smaller character on very small screens */
+    }
+}
+
+/* Landscape orientation adjustments for mobile */
+@media screen and (max-height: 480px) and (orientation: landscape) {
+    #game-hud {
+        padding: 2px 8px; /* Very compact for landscape */
+    }
+    
+    #hud-logo {
+        font-size: 1.4rem;
+    }
+    
+    #score-display {
+        font-size: 1.1rem;
+    }
+    
+    #sound-controls {
+        bottom: 5px;
+        right: 5px;
+    }
+    
+    #instructions-panel {
+        bottom: 5px;
+        left: 5px;
+    }
+    
+    #thought-bubble-container {
+        bottom: 40px;
+        padding: 8px;
+    }
 } 

@@ -115,6 +115,26 @@
 - [x] Implement special DeepSeek prompt for mushroom consumption (secrets of the universe, conspiracy theories).
 - [x] Add 5-second spin and color change animation for mushroom consumption.
 
+**Phase 6: Special Effects Items & Enhanced Chaos**
+- [x] **UFO Item (🛸):**
+    - [x] Add UFO emoji item worth 500 points.
+    - [x] Implement teleportation effect that moves character to opposite side of globe.
+    - [x] Add green glowing UFO animation effect.
+    - [x] Create paranoid/conspiratorial reflection prompts for UFO consumption.
+- [x] **Monkey Item (🐒):**
+    - [x] Add monkey emoji item worth 300 points.
+    - [x] Implement erratic movement effect that makes map shake and move randomly.
+    - [x] Add wild spinning monkey animation effect.
+    - [x] Create silly/hyperactive reflection prompts for monkey consumption.
+- [x] **Money Item (💸):**
+    - [x] Add money with wings emoji item worth 1,000,000 points.
+    - [x] Add golden bling animation effect.
+    - [x] Create materialistic/wealth-obsessed reflection prompts for money consumption.
+- [x] **Enhanced Reflection System:**
+    - [x] Make general reflections more unhinged, random, and chaotic.
+    - [x] Add stream-of-consciousness style with bizarre logical leaps.
+    - [x] Implement specific reflection types for each special item.
+
 ### Later / Optional
 *   Consider leaderboard alternatives if desired.
 *   Advanced item behaviors (e.g., fleeing, chasing).

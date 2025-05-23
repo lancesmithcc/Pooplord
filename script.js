@@ -48,6 +48,8 @@ const PERSON_FRAME_CHANGE_INTERVAL = 250; // Milliseconds (4 frames per second)
 let backgroundMusic;
 const fartSounds = ['fart1.mp3', 'fart2.mp3', 'fart3.mp3'];
 let hasUserInteracted = false; // Flag to track user interaction for music autoplay
+let isAudioUnlocked = false; // Flag for audio context unlock
+let isSpeechUnlocked = false; // Flag for speech synthesis unlock
 let scoreMilestoneTracker = 0; // Tracks 500-point milestones for voice lines
 const milestonePhrases = ["oh crappidy crap yeah", "cool poop my man", "super duty! fartsicles!"];
 
@@ -553,6 +555,12 @@ function initializeCharacterPosition() {
     // Add event listeners for desktop
     document.addEventListener('keydown', (event) => {
         if (!map) return;
+        
+        // Unlock audio/speech on first keypress
+        if (!hasUserInteracted) {
+            unlockAudioAndSpeech();
+        }
+        
         let panX = 0;
         let panY = 0;
         switch (event.key) {
@@ -595,6 +603,12 @@ function initializeCharacterPosition() {
 
     character.addEventListener('touchstart', (event) => {
         if (!map) return;
+        
+        // Unlock audio/speech on first touch
+        if (!hasUserInteracted) {
+            unlockAudioAndSpeech();
+        }
+        
         isDragging = true;
         touchStartX = event.touches[0].clientX;
         touchStartY = event.touches[0].clientY;
@@ -665,90 +679,206 @@ function adaptUIForDevice() {
 
 // Function to play a random fart sound
 function playRandomFartSound() {
-    if (!areSfxOn || fartSounds.length === 0) return; // Check if SFX are enabled
+    if (!areSfxOn || fartSounds.length === 0) {
+        console.log("Fart sound cancelled: SFX disabled or no sounds available");
+        return;
+    }
+    
+    // If audio isn't unlocked yet, try to unlock it
+    if (!isAudioUnlocked && hasUserInteracted) {
+        unlockAudioAndSpeech();
+    }
+    
     const randomIndex = Math.floor(Math.random() * fartSounds.length);
     const soundToPlay = fartSounds[randomIndex];
     const soundEffect = new Audio(soundToPlay);
     soundEffect.volume = 0.7; // Adjust volume for sound effects if needed
-    soundEffect.play().catch(error => console.error(`Error playing sound ${soundToPlay}:`, error));
+    
+    soundEffect.addEventListener('canplaythrough', () => {
+        console.log(`Fart sound ${soundToPlay} ready to play`);
+    });
+    
+    soundEffect.addEventListener('error', (error) => {
+        console.error(`Error loading sound ${soundToPlay}:`, error);
+    });
+    
+    soundEffect.play().then(() => {
+        console.log(`Playing fart sound: ${soundToPlay}`);
+    }).catch(error => {
+        console.error(`Error playing sound ${soundToPlay}:`, error);
+        
+        // If audio play fails and we haven't unlocked yet, try again
+        if (!isAudioUnlocked) {
+            console.log("Audio play failed, attempting to unlock audio context");
+            unlockAudioAndSpeech();
+        }
+    });
 }
 
 // Function to make the browser speak text
 function speakText(textToSpeak) {
-    if (!areSfxOn || !('speechSynthesis' in window)) return; // Check if SFX are enabled
+    if (!areSfxOn || !textToSpeak) {
+        console.log("Speech cancelled: SFX disabled or no text provided");
+        return;
+    }
+    
+    if (!('speechSynthesis' in window)) {
+        console.log("Speech synthesis not supported in this browser");
+        return;
+    }
+    
+    // If user hasn't interacted yet, try to unlock audio/speech
+    if (!hasUserInteracted || !isSpeechUnlocked) {
+        console.log("User interaction or speech not unlocked yet, attempting unlock...");
+        unlockAudioAndSpeech();
+        
+        // Retry speech after a short delay to give unlock time to work
+        setTimeout(() => {
+            if (isSpeechUnlocked) {
+                speakText(textToSpeak);
+            } else {
+                console.log("Speech synthesis still locked after unlock attempt");
+            }
+        }, 100);
+        return;
+    }
 
-    // Cancel any previous utterances to prevent overlap / queue buildup
-    window.speechSynthesis.cancel();
+    console.log("Attempting to speak:", textToSpeak);
     
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    // Optional: Configure voice, pitch, rate
-    // utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === 'Google UK English Male'); // Example voice
-    utterance.pitch = 1.8; // 0 to 2, default is 1. Higher is more high-pitched.
-    // utterance.rate = 1; // 0.1 to 10
-    // utterance.volume = 1; // 0 to 1 (already default)
+    // Cancel any previous utterances to prevent overlap
+    try {
+        window.speechSynthesis.cancel();
+    } catch (error) {
+        console.log("Error cancelling previous speech:", error);
+    }
     
-    window.speechSynthesis.speak(utterance);
+    // Wait a moment for cancel to complete
+    setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        
+        // Configure voice settings
+        utterance.pitch = 1.8; // Higher pitch for Pooplord
+        utterance.rate = 0.9; // Slightly slower for clarity
+        utterance.volume = 1.0; // Full volume
+        
+        // Add event handlers for debugging
+        utterance.onstart = () => {
+            console.log("Speech started successfully");
+        };
+        
+        utterance.onend = () => {
+            console.log("Speech ended");
+        };
+        
+        utterance.onerror = (event) => {
+            console.error("Speech synthesis error:", event.error);
+            
+            // If speech fails, show thought bubble as fallback on all devices
+            if (thoughtBubbleContainer && currentReflectionText) {
+                console.log("Speech failed, showing thought bubble as fallback");
+                thoughtBubbleContainer.classList.remove('hidden');
+            }
+        };
+        
+        try {
+            window.speechSynthesis.speak(utterance);
+            console.log("Speech utterance queued");
+        } catch (error) {
+            console.error("Error speaking text:", error);
+        }
+    }, 50); // Short delay to ensure cancel completes
 }
 
 // Event listeners for sound toggle buttons
 if (musicToggleButton) {
     musicToggleButton.addEventListener('click', () => {
+        // Unlock audio/speech on first user interaction
+        unlockAudioAndSpeech();
+        
         isMusicOn = !isMusicOn;
         musicToggleButton.textContent = isMusicOn ? '🎵' : '🔇'; // Update icon
+        
         if (backgroundMusic) {
             if (isMusicOn) {
-                if (hasUserInteracted && backgroundMusic.paused) { // Only play if user has interacted and it's paused
+                if (backgroundMusic.paused) {
                     backgroundMusic.play().catch(error => console.error("Error playing background music (toggle):", error));
                 }
             } else {
                 backgroundMusic.pause();
             }
         }
-        // Ensure user interaction flag is set if music is turned on via button
-        if (isMusicOn && !hasUserInteracted) {
-            hasUserInteracted = true;
-            // Attempt to play if paused, as this is now a valid user interaction
-            if (backgroundMusic && backgroundMusic.paused) {
-                 backgroundMusic.play().catch(error => console.error("Error playing background music (initial toggle):", error));
-            }
-        }
+        
+        console.log("Music toggled:", isMusicOn ? "ON" : "OFF");
     });
 }
 
 if (sfxToggleButton) {
     sfxToggleButton.addEventListener('click', () => {
+        // Unlock audio/speech on first user interaction
+        unlockAudioAndSpeech();
+        
         areSfxOn = !areSfxOn;
         sfxToggleButton.textContent = areSfxOn ? '🔊' : '🔇'; // Update icon
+        
         // If SFX are turned off, cancel any ongoing speech
         if (!areSfxOn && 'speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
+            try {
+                window.speechSynthesis.cancel();
+            } catch (error) {
+                console.log("Error cancelling speech on SFX toggle:", error);
+            }
         }
         
-        // Attempt to prime speech synthesis on iOS when SFX are first enabled by user
-        if (areSfxOn && !hasUserInteracted && 'speechSynthesis' in window) {
-            console.log("Attempting to prime Speech Synthesis for iOS...");
-            // Create a very short, silent utterance
-            const primingUtterance = new SpeechSynthesisUtterance(' '); // A single space or empty string
-            primingUtterance.volume = 0; // Make it silent
-            primingUtterance.rate = 10; // Speak it fast
-            primingUtterance.pitch = 0.1; // Low pitch
-            
-            window.speechSynthesis.speak(primingUtterance);
-            // Note: This might still require a brief sound to actually unlock audio context on some iOS versions.
-            // We are also relying on the fact that hasUserInteracted is set *after* this block.
+        // Test speech when SFX are enabled
+        if (areSfxOn && isSpeechUnlocked) {
+            speakText("Sound effects activated!");
         }
-
-         // Ensure user interaction flag is set if sfx are turned on via button
-        if (areSfxOn && !hasUserInteracted) {
-           hasUserInteracted = true;
-        }
+        
+        console.log("SFX toggled:", areSfxOn ? "ON" : "OFF");
     });
 }
 
 // Ensure that initMap is called after the DOM is fully loaded, including the new buttons
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialization that depends on DOM elements can go here
-    // For example, attaching event listeners to buttons if not already done globally
+    console.log("DOM loaded, initializing audio and speech systems...");
+    
+    // Initialize audio/speech detection
+    if ('speechSynthesis' in window) {
+        console.log("Speech synthesis is supported");
+        
+        // Wait for voices to load (important for some browsers)
+        const loadVoices = () => {
+            const voices = speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                console.log(`Found ${voices.length} voices available`);
+            }
+        };
+        
+        // Some browsers load voices asynchronously
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+        loadVoices(); // Try to load immediately too
+    } else {
+        console.log("Speech synthesis not supported in this browser");
+    }
+    
+    // Check for Web Audio API support
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+        console.log("Web Audio API is supported");
+    } else {
+        console.log("Web Audio API not supported");
+    }
+    
+    // Add click listener to document to catch any user interaction
+    document.addEventListener('click', function firstClick() {
+        console.log("First click detected, unlocking audio and speech");
+        unlockAudioAndSpeech();
+        // Remove this listener after first use
+        document.removeEventListener('click', firstClick);
+    }, { once: true });
+    
     // The Google Maps API script will call window.initMap itself once it's loaded.
 });
 
@@ -997,4 +1127,45 @@ function startMonkeyEffect() {
         map.panBy(randomX, randomY);
         erraticMoveCount++;
     }, 100); // Move every 100ms for erratic effect
+}
+
+// Function to unlock audio context and speech synthesis
+function unlockAudioAndSpeech() {
+    console.log("Attempting to unlock audio and speech...");
+    
+    // Unlock audio context
+    if (!isAudioUnlocked) {
+        // Create a tiny audio element and try to play it
+        const silentAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LDcCUHLYDO8tiJOQgZZ7zs556NEAxQpuTxlmIcBjiS2PHKUUAGLIPF8LRXEQ1VqeHwu3MDEHoMEHop8eudJAQZA2EAAA==');
+        silentAudio.volume = 0.01;
+        silentAudio.play().then(() => {
+            console.log("Audio context unlocked successfully");
+            isAudioUnlocked = true;
+        }).catch(err => {
+            console.log("Audio unlock failed:", err);
+        });
+    }
+    
+    // Unlock speech synthesis
+    if (!isSpeechUnlocked && 'speechSynthesis' in window) {
+        // Create a short, quiet utterance to unlock speech
+        const silentUtterance = new SpeechSynthesisUtterance(' ');
+        silentUtterance.volume = 0.01;
+        silentUtterance.rate = 10;
+        silentUtterance.pitch = 0.1;
+        
+        silentUtterance.onstart = () => {
+            console.log("Speech synthesis unlocked successfully");
+            isSpeechUnlocked = true;
+            window.speechSynthesis.cancel(); // Cancel the silent utterance
+        };
+        
+        silentUtterance.onerror = () => {
+            console.log("Speech synthesis unlock failed");
+        };
+        
+        window.speechSynthesis.speak(silentUtterance);
+    }
+    
+    hasUserInteracted = true;
 } 
